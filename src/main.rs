@@ -1,5 +1,7 @@
 mod run;
 mod render;
+mod keyhandling;
+
 use color_eyre::eyre::Result;
 use crate::run::run;
 
@@ -11,5 +13,6 @@ fn main() -> Result<()> {
 
     ratatui::restore();
     crossterm::terminal::disable_raw_mode()?;
+
     result
 }
