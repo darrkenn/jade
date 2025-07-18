@@ -7,3 +7,10 @@ edition = "2024"
 crossterm = "0.29.0"
 ratatui = {version = "0.30.0-alpha.5", features=["default"]}
 color-eyre = "0.6.5"
+
+[profile.dev]
+opt-level = 1
+incremental = true
+
+[build]
+rustc-wrapper = "sccache"
