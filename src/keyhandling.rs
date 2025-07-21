@@ -1,16 +1,9 @@
-use std::fmt::format;
-use std::fs::{metadata, File};
-use std::io::{BufReader, Seek};
-use std::{fs, thread};
 use std::sync::mpsc::Sender;
-use std::time::Duration;
 use crossterm::event;
 use crossterm::event::{KeyEvent, KeyEventKind};
-use rodio::{Decoder, Sink};
-use log::error;
 use crate::Jade;
 use crate::musicplayer::MusicPlayer;
-use crate::musicplayer::MusicPlayer::NewSong;
+use crate::musicplayer::MusicPlayer::{NewSong, Pause};
 
 pub fn handle_key(key:KeyEvent, jade: &mut Jade, songs: &Vec<String>, tx: Sender<MusicPlayer>) -> bool {
     if key.kind != KeyEventKind::Press {
@@ -30,6 +23,9 @@ pub fn handle_key(key:KeyEvent, jade: &mut Jade, songs: &Vec<String>, tx: Sender
                 format!("{}/{}", jade.music_location, song_name)
             };
             tx.send(NewSong(song)).expect("UhOh");
+        }
+        event::KeyCode::Char(' ') => {
+            tx.send(Pause).expect("UhOh");
         }
         _ => {}
     }

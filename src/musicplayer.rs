@@ -15,7 +15,7 @@ pub enum MusicPlayer {
 
 pub fn create_mp() -> Sender<MusicPlayer> {
     let (tx, rx) = mpsc::channel::<MusicPlayer>();
-    
+
     thread::spawn(move || {
         let stream_handle = rodio::OutputStreamBuilder::open_default_stream().expect("Cant open stream");
         let sink = Sink::connect_new(&stream_handle.mixer());
@@ -26,7 +26,7 @@ pub fn create_mp() -> Sender<MusicPlayer> {
                     sink.play()
                 },
                 MusicPlayer::Pause => {
-                    sink.pause()
+                    sink.pause();
                 },
                 MusicPlayer::Stop => {
                     sink.stop()
@@ -40,9 +40,6 @@ pub fn create_mp() -> Sender<MusicPlayer> {
                     let decoded_file = Decoder::new(file).unwrap();
                     sink.append(decoded_file);
                     sink.play();
-                    loop {
-                        
-                    }
                 }
             }
         };
