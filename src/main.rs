@@ -1,21 +1,18 @@
 mod run;
 mod render;
 mod keyhandling;
+mod musicplayer;
 
 use std::{fs, thread};
+use std::fs::File;
+use std::io::BufReader;
 use std::sync::mpsc;
 use std::path::PathBuf;
 use color_eyre::eyre::Result;
 use ratatui::widgets::{ListState};
 use serde::{Deserialize, Serialize};
+use crate::musicplayer::create_mp;
 use crate::run::run;
-
-enum MusicPlayer {
-    Pause,
-    Play,
-    Stop,
-    CurrentPosition(),
-}
 
 const CONFIGFILE: &str = "config.toml";
 
@@ -32,20 +29,14 @@ fn main() -> Result<()>{
     let jade_string = fs::read_to_string(CONFIGFILE).expect("Cant find config file");
     let mut jade: Jade = toml::from_str((&jade_string).as_ref()).expect("Cant parse file");
     let songs = get_songs_in_folder(jade.music_location.parse()?);
-    let (tx, rx) = mpsc::channel::<String>();
-
-    let val = String::from("hi");
-    tx.send(val)?;
-    thread::spawn(move || {
-        let val = rx.recv().unwrap();
-        panic!("TEST TEST {}",val)
-    });
-
+    //Creating the music player sink thread
+    let tx =  create_mp();
+    
     //Setup of UI
     color_eyre::install()?;
     crossterm::terminal::enable_raw_mode()?;
     let terminal = ratatui::init();
-    let result = run(terminal, &mut jade, songs);
+    let result = run(terminal, &mut jade, songs, tx);
     ratatui::restore();
     crossterm::terminal::disable_raw_mode()?;
 
