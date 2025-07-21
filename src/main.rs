@@ -2,12 +2,20 @@ mod run;
 mod render;
 mod keyhandling;
 
-use std::fs;
+use std::{fs, thread};
+use std::sync::mpsc;
 use std::path::PathBuf;
 use color_eyre::eyre::Result;
-use ratatui::widgets::{List, ListItem, ListState};
+use ratatui::widgets::{ListState};
 use serde::{Deserialize, Serialize};
 use crate::run::run;
+
+enum MusicPlayer {
+    Pause,
+    Play,
+    Stop,
+    CurrentPosition(),
+}
 
 const CONFIGFILE: &str = "config.toml";
 
@@ -24,6 +32,14 @@ fn main() -> Result<()>{
     let jade_string = fs::read_to_string(CONFIGFILE).expect("Cant find config file");
     let mut jade: Jade = toml::from_str((&jade_string).as_ref()).expect("Cant parse file");
     let songs = get_songs_in_folder(jade.music_location.parse()?);
+    let (tx, rx) = mpsc::channel::<String>();
+
+    let val = String::from("hi");
+    tx.send(val)?;
+    thread::spawn(move || {
+        let val = rx.recv().unwrap();
+        panic!("TEST TEST {}",val)
+    });
 
     //Setup of UI
     color_eyre::install()?;
