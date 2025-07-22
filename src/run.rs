@@ -2,7 +2,7 @@ use std::sync::mpsc::Sender;
 use crossterm::event;
 use crossterm::event::Event;
 use ratatui::DefaultTerminal;
-use crate::Jade;
+use crate::{Jade, VOLUMELEVELS};
 use crate::keyhandling::handle_key;
 use crate::musicplayer::MusicPlayer;
 use crate::render::render;

@@ -7,32 +7,38 @@ use rodio::{Decoder, Sink};
 
 pub enum MusicPlayer {
     Pause,
-    Play,
     Stop,
     Volume(f32),
     NewSong(String),
 }
 
-pub fn create_mp() -> Sender<MusicPlayer> {
+pub fn create_mp(volume: f32) -> Sender<MusicPlayer> {
     let (tx, rx) = mpsc::channel::<MusicPlayer>();
 
     thread::spawn(move || {
         let stream_handle = rodio::OutputStreamBuilder::open_default_stream().expect("Cant open stream");
         let sink = Sink::connect_new(&stream_handle.mixer());
+        sink.set_volume(volume);
         loop {
             let received = rx.recv().unwrap();
             match received {
-                MusicPlayer::Play => {
-                    sink.play()
-                },
                 MusicPlayer::Pause => {
-                    sink.pause();
+                    if sink.is_paused() {
+                        sink.play()
+                    } else {
+                        sink.pause()
+                    }
                 },
                 MusicPlayer::Stop => {
-                    sink.stop()
+                    sink.clear()
                 },
                 MusicPlayer::Volume(volume) => {
-                    sink.set_volume(volume);
+                    //This seems really stupid but it works
+                    if volume == 0.0 {
+                        sink.set_volume(0.0);
+                    } else {
+                        sink.set_volume(volume);
+                    }
                 },
                 MusicPlayer::NewSong(song) => {
                     sink.clear();

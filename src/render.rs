@@ -1,10 +1,8 @@
-use std::io::repeat;
 use ratatui::Frame;
-use ratatui::layout::{Constraint, Flex, Layout, Rect};
+use ratatui::layout::{Constraint, Layout};
 use ratatui::prelude::Direction;
 use ratatui::style::{Color, Style};
-use ratatui::text::Line;
-use ratatui::widgets::{Block, BorderType, HighlightSpacing, List, ListDirection, ListItem, Widget};
+use ratatui::widgets::{Block, BorderType, HighlightSpacing, List, ListDirection, Widget};
 use crate::Jade;
 
 pub fn render(frame: &mut Frame, jade: &mut Jade, songs: Vec<String>) {
