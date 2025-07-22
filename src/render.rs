@@ -7,30 +7,40 @@ use crate::Jade;
 
 pub fn render(frame: &mut Frame, jade: &mut Jade, songs: Vec<String>) {
     let area = frame.area();
-    let chunks = Layout::new (
-        Direction::Horizontal,
-        [Constraint::Percentage(60), Constraint::Percentage(40)]
+
+    let vertical_chunks = Layout::new (
+        Direction::Vertical, [Constraint::Percentage(70), Constraint::Percentage(30)]
     ).split(area);
 
     Block::bordered()
         .border_type(BorderType::Rounded)
         .border_style(Style::default().fg(Color::White))
-        .render(chunks[0], frame.buffer_mut());
+        .render(vertical_chunks[1], frame.buffer_mut());
+
+    let horizontal_chunks = Layout::new (
+        Direction::Horizontal, [Constraint::Percentage(55), Constraint::Percentage(45)]
+    ).split(vertical_chunks[0]);
+
+    Block::bordered()
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(Color::White))
+        .render(horizontal_chunks[0], frame.buffer_mut());
     Block::bordered()
         .border_type(BorderType::Rounded)
         .border_style(Style::default().fg(Color::Blue))
         .title(jade.music_location.to_string())
         .title_bottom(jade.volume.to_string())
-        .render(chunks[1], frame.buffer_mut());
+        .render(horizontal_chunks[1], frame.buffer_mut());
+
 
     //Area for the songs
     let [left_inner_area] = Layout::vertical([Constraint::Fill(1)])
         .margin(1)
-        .areas(chunks[0]);
+        .areas(horizontal_chunks[0]);
     //Area for song information
     let [right_inner_area] = Layout::vertical([Constraint::Fill(1)])
         .margin(1)
-        .areas(chunks[0]);
+        .areas(horizontal_chunks[1]);
 
     let song_list = List::new(songs)
         .style(Style::new().gray())

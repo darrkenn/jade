@@ -10,11 +10,14 @@ pub enum MusicPlayer {
     Stop,
     Volume(f32),
     NewSong(String),
+    AddToQueue(String),
+    End
 }
 
 pub fn create_mp(volume: f32) -> Sender<MusicPlayer> {
     let (tx, rx) = mpsc::channel::<MusicPlayer>();
 
+    let tx_clone = tx.clone();
     thread::spawn(move || {
         let stream_handle = rodio::OutputStreamBuilder::open_default_stream().expect("Cant open stream");
         let sink = Sink::connect_new(&stream_handle.mixer());
@@ -42,13 +45,22 @@ pub fn create_mp(volume: f32) -> Sender<MusicPlayer> {
                 },
                 MusicPlayer::NewSong(song) => {
                     sink.clear();
-                    let file = BufReader::new(File::open(&song).unwrap_or_else(|_| panic!("Cant read file: {}", song)));
-                    let decoded_file = Decoder::new(file).unwrap();
-                    sink.append(decoded_file);
+                    sink.append(create_song(song));
                     sink.play();
+                },
+                MusicPlayer::AddToQueue(song) => {
+                    sink.append(create_song(song));
+                }
+                MusicPlayer::End => {
+                    break;
                 }
             }
         };
     });
-    tx.clone()
+    tx_clone
+}
+
+fn create_song(song: String) -> Decoder<BufReader<File>> {
+    let file = BufReader::new(File::open(&song).unwrap_or_else(|_| panic!("Cant read file: {}", song)));
+    Decoder::new(file).unwrap()
 }

@@ -2,9 +2,10 @@ use std::fs;
 use std::sync::mpsc::Sender;
 use crossterm::event;
 use crossterm::event::{KeyEvent, KeyEventKind};
+use log::__private_api::loc;
 use crate::{Jade, CONFIGFILE, VOLUMELEVELS};
 use crate::musicplayer::MusicPlayer;
-use crate::musicplayer::MusicPlayer::{NewSong, Pause, Stop, Volume};
+use crate::musicplayer::MusicPlayer::{AddToQueue, End, NewSong, Pause, Stop, Volume};
 
 pub fn handle_key(key:KeyEvent, jade: &mut Jade, songs: &Vec<String>, tx: Sender<MusicPlayer>) -> bool {
     if key.kind != KeyEventKind::Press {
@@ -14,6 +15,7 @@ pub fn handle_key(key:KeyEvent, jade: &mut Jade, songs: &Vec<String>, tx: Sender
         event::KeyCode::Esc => {
             let toml_data = toml::to_string(&jade).unwrap();
             fs::write(CONFIGFILE, toml_data).expect("Cant write to file");
+            tx.send(End).expect("Cant stop thread");
             return true
         }
         event::KeyCode::Up => {jade.current_selection.select_previous()}
@@ -21,17 +23,16 @@ pub fn handle_key(key:KeyEvent, jade: &mut Jade, songs: &Vec<String>, tx: Sender
         //Music player commands
         event::KeyCode::Enter => {
             //Essential formatting for correct reading of song.
-
             if let Some(i) = jade.current_selection.selected() {
-                let song_name =  &songs[i];
-                    let song = if jade.music_location.ends_with("/") {
-                        format!("{}{}", jade.music_location, song_name)
-                    } else {
-                        format!("{}/{}", jade.music_location, song_name)
-                    };
-                    tx.send(NewSong(song)).expect("UhOh");
+                let song = current_song(jade.music_location.clone(), &songs, i);
+                tx.send(NewSong(song)).expect("UhOh");
             }
-
+        }
+        event::KeyCode::Char('q') => {
+            if let Some(i) = jade.current_selection.selected() {
+                let song = current_song(jade.music_location.clone(), &songs, i);
+                tx.send(AddToQueue(song)).expect("Cant add to queue");
+            }
         }
         event::KeyCode::Char(' ') => {
             tx.send(Pause).expect("Couldnt pause song");
@@ -57,4 +58,14 @@ pub fn handle_key(key:KeyEvent, jade: &mut Jade, songs: &Vec<String>, tx: Sender
         _ => {}
     }
     false
+}
+
+fn current_song(location: String, songs: &Vec<String>, i: usize) -> String {
+        let song_name =  &songs[i];
+        let song = if location.ends_with("/") {
+            format!("{}{}", location, song_name)
+        } else {
+            format!("{}/{}", location, song_name)
+        };
+        song
 }
