@@ -1,11 +1,13 @@
+use unicode_width::UnicodeWidthStr;
 use ratatui::Frame;
-use ratatui::layout::{Constraint, Layout};
+use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::prelude::Direction;
 use ratatui::style::{Color, Style};
-use ratatui::widgets::{Block, BorderType, HighlightSpacing, List, ListDirection, Widget};
+use ratatui::style::Color::Green;
+use ratatui::widgets::{Block, BorderType, HighlightSpacing, List, ListDirection, ListItem, Widget};
 use crate::Jade;
 
-pub fn render(frame: &mut Frame, jade: &mut Jade, songs: Vec<String>) {
+pub fn render(frame: &mut Frame, jade: &mut Jade) {
     let area = frame.area();
 
     let vertical_chunks = Layout::new (
@@ -42,15 +44,51 @@ pub fn render(frame: &mut Frame, jade: &mut Jade, songs: Vec<String>) {
         .margin(1)
         .areas(horizontal_chunks[1]);
 
-    let song_list = List::new(songs)
+    let left_area_chunks = Layout::new(
+        Direction::Horizontal, [Constraint::Percentage(80), Constraint::Percentage(20)]
+    ).split(left_inner_area);
+
+    //Rendering of widgets
+    render_song_list(jade, left_area_chunks[0], frame);
+    render_time_list(jade, left_area_chunks[1], frame);
+}
+
+fn render_song_list(jade: &mut Jade, area: Rect, frame: &mut Frame) {
+    let list = jade.songs
+        .iter()
+        .map(|song| {
+            let max = area.width.saturating_sub(10) as usize;
+
+            let title = if song.width() < max {
+                song.to_string()
+            } else {
+                format!("{}...", song.chars().take(max.saturating_sub(3)).collect::<String>().as_str())
+            };
+
+            ListItem::from(title)
+        });
+    let song_list = List::new(list)
         .style(Style::new().gray())
-        .highlight_style(Style::new().bold())
+        .highlight_style(Style::default().bold().fg(Green))
         .highlight_spacing(HighlightSpacing::Always)
         .highlight_symbol("-> ")
         .repeat_highlight_symbol(true)
         .direction(ListDirection::TopToBottom);
+    frame.render_stateful_widget(song_list, area, &mut jade.current_selection);
+}
+fn render_time_list(jade: &mut Jade, area: Rect, frame: &mut Frame) {
+    let list: Vec<ListItem> = jade.visual_lengths
+        .iter()
+        .map(|length| {
+            let length = length.to_string();
+            ListItem::new(length)
+        })
+        .collect();
 
-    frame.render_stateful_widget(song_list, left_inner_area, &mut jade.current_selection)
+    let time_list = List::new(list)
+        .direction(ListDirection::TopToBottom);
+    frame.render_widget(time_list, area)
+
 }
 
 

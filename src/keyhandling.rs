@@ -2,12 +2,11 @@ use std::fs;
 use std::sync::mpsc::Sender;
 use crossterm::event;
 use crossterm::event::{KeyEvent, KeyEventKind};
-use log::__private_api::loc;
 use crate::{Jade, CONFIGFILE, VOLUMELEVELS};
 use crate::musicplayer::MusicPlayer;
 use crate::musicplayer::MusicPlayer::{AddToQueue, End, NewSong, Pause, Stop, Volume};
 
-pub fn handle_key(key:KeyEvent, jade: &mut Jade, songs: &Vec<String>, tx: Sender<MusicPlayer>) -> bool {
+pub fn handle_key(key:KeyEvent, jade: &mut Jade, tx: Sender<MusicPlayer>) -> bool {
     if key.kind != KeyEventKind::Press {
         return false;
     }
@@ -24,13 +23,13 @@ pub fn handle_key(key:KeyEvent, jade: &mut Jade, songs: &Vec<String>, tx: Sender
         event::KeyCode::Enter => {
             //Essential formatting for correct reading of song.
             if let Some(i) = jade.current_selection.selected() {
-                let song = current_song(jade.music_location.clone(), &songs, i);
+                let song = current_song(jade.music_location.clone(), &jade.songs, i);
                 tx.send(NewSong(song)).expect("UhOh");
             }
         }
         event::KeyCode::Char('q') => {
             if let Some(i) = jade.current_selection.selected() {
-                let song = current_song(jade.music_location.clone(), &songs, i);
+                let song = current_song(jade.music_location.clone(), &jade.songs, i);
                 tx.send(AddToQueue(song)).expect("Cant add to queue");
             }
         }
