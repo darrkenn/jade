@@ -1,9 +1,11 @@
+use color_eyre::owo_colors::OwoColorize;
 use unicode_width::UnicodeWidthStr;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Rect};
+use ratatui::layout::HorizontalAlignment::Center;
 use ratatui::prelude::Direction;
-use ratatui::style::{Color, Style};
-use ratatui::style::Color::Green;
+use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::Color::{Green};
 use ratatui::widgets::{Block, BorderType, HighlightSpacing, List, ListDirection, ListItem, Widget};
 use crate::Jade;
 
@@ -25,12 +27,14 @@ pub fn render(frame: &mut Frame, jade: &mut Jade) {
 
     Block::bordered()
         .border_type(BorderType::Rounded)
+        .title_top("Music")
+        .title_alignment(Center)
+        .title_style(Style::default().add_modifier(Modifier::BOLD))
         .border_style(Style::default().fg(Color::White))
         .render(horizontal_chunks[0], frame.buffer_mut());
     Block::bordered()
         .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(Color::Blue))
-        .title(jade.music_location.to_string())
+        .border_style(Style::default().fg(Color::White))
         .title_bottom(jade.volume.to_string())
         .render(horizontal_chunks[1], frame.buffer_mut());
 
