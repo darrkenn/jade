@@ -1,9 +1,10 @@
 use std::fs::File;
 use std::io::BufReader;
-use std::sync::mpsc;
+use std::sync::{mpsc, Arc, Mutex};
 use std::sync::mpsc::Sender;
 use std::thread;
-use rodio::{Decoder, Sink};
+use rodio::{Decoder, Sink, Source};
+use crate::Jade;
 
 pub enum MusicPlayer {
     Pause,
@@ -16,11 +17,11 @@ pub enum MusicPlayer {
 
 pub fn create_mp(volume: f32) -> Sender<MusicPlayer> {
     let (tx, rx) = mpsc::channel::<MusicPlayer>();
-
     let tx_clone = tx.clone();
     thread::spawn(move || {
         let stream_handle = rodio::OutputStreamBuilder::open_default_stream().expect("Cant open stream");
         let sink = Sink::connect_new(&stream_handle.mixer());
+        let mut current_duration: u64 = 0;
         sink.set_volume(volume);
         loop {
             let received = rx.recv().unwrap();
@@ -33,7 +34,7 @@ pub fn create_mp(volume: f32) -> Sender<MusicPlayer> {
                     }
                 },
                 MusicPlayer::Stop => {
-                    sink.clear()
+                    sink.clear();
                 },
                 MusicPlayer::Volume(volume) => {
                     //This seems really stupid but it works
@@ -41,16 +42,22 @@ pub fn create_mp(volume: f32) -> Sender<MusicPlayer> {
                         sink.set_volume(0.0);
                     } else {
                         sink.set_volume(volume);
+                        let current_pos = sink.get_pos().as_secs_f64().round() as u64;
                     }
                 },
                 MusicPlayer::NewSong(song) => {
                     sink.clear();
-                    sink.append(create_song(song));
+                    let song = create_song(song);
+                    let duration = song.total_duration().unwrap().as_secs_f64().round() as u64;
+                    current_duration = duration;
+                    sink.append(song);
                     sink.play();
+
                 },
                 MusicPlayer::AddToQueue(song) => {
                     sink.append(create_song(song));
-                }
+                },
+
                 MusicPlayer::End => {
                     break;
                 }

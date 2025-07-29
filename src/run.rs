@@ -7,13 +7,13 @@ use crate::keyhandling::handle_key;
 use crate::musicplayer::MusicPlayer;
 use crate::render::render;
 
-pub fn run(mut terminal: DefaultTerminal, jade: &mut Jade, tx: Sender<MusicPlayer>) -> color_eyre::Result<()> {
+pub fn run(mut terminal: DefaultTerminal, jade: &mut Jade, mp: Sender<MusicPlayer>) -> color_eyre::Result<()> {
     loop {
         terminal.draw(|f| render(f, jade))?;
 
         //Event reading
         if let Event::Key(key) = event::read()? {
-            if handle_key(key, jade, tx.clone()) {
+            if handle_key(key, jade, mp.clone()) {
                 break
             }
         }
