@@ -6,12 +6,14 @@ mod song_information;
 mod queue;
 
 use std::{fs};
+use std::sync::{Arc, Mutex};
+use std::sync::mpsc::Receiver;
 use color_eyre::eyre::Result;
 use ratatui::widgets::{ListState};
 use serde::{Deserialize, Serialize};
 use crate::FocusArea::{Music, Queue};
 use crate::musicplayer::{create_mp};
-use crate::queue::create_queue;
+use crate::queue::{create_queue, create_visual_queue};
 use crate::run::run;
 use crate::song_information::get_songs_in_folder;
 
@@ -74,14 +76,19 @@ fn main() -> Result<()>{
     jade.focus_area = Music;
     jade.song_current_selection.select_first();
     jade.queue_current_selection.select_first();
+
+    // Thread creation
     let mp =  create_mp(jade.volume);
     let qc = create_queue(mp.clone());
+    let vq = create_visual_queue(qc.clone());
+
+
 
     //Setup of UI
     color_eyre::install()?;
     crossterm::terminal::enable_raw_mode()?;
     let terminal = ratatui::init();
-    let result = run(terminal, &mut jade, mp);
+    let result = run(terminal, &mut jade, mp, vq);
     ratatui::restore();
     crossterm::terminal::disable_raw_mode()?;
 

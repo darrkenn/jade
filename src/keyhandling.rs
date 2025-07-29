@@ -7,9 +7,9 @@ use crate::{Jade, CONFIGFILE, VOLUMELEVELS};
 use crate::FocusArea::{Music, Queue};
 use crate::musicplayer::MusicPlayer;
 use crate::musicplayer::MusicPlayer::{End, NewSong, Pause, Stop, Volume};
+use crate::queue::VisualQueue;
 
-
-pub fn handle_key(key:KeyEvent, jade: &mut Jade, mp: Sender<MusicPlayer>) -> bool {
+pub fn handle_key(key:KeyEvent, jade: &mut Jade, mp: Sender<MusicPlayer>, vq: Sender<VisualQueue>) -> bool {
     //Key filter
     if key.kind != KeyEventKind::Press {
         return false;
@@ -24,6 +24,7 @@ pub fn handle_key(key:KeyEvent, jade: &mut Jade, mp: Sender<MusicPlayer>) -> boo
             let toml_data = toml::to_string(&jade).unwrap();
             fs::write(CONFIGFILE, toml_data).expect("Cant write to file");
             mp.send(End).expect("Cant stop thread");
+            vq.send(VisualQueue::End).expect("Cant stop thread");
             return true
         }
         //Audio controls
@@ -58,7 +59,8 @@ pub fn handle_key(key:KeyEvent, jade: &mut Jade, mp: Sender<MusicPlayer>) -> boo
             event::KeyCode::Char('q') => {
                 if let Some(i) = jade.song_current_selection.selected() {
                     let song = current_song(jade.music_location.clone(), &jade.songs, i);
-                    jade.queue.push(song);
+                    jade.queue.push((&song).parse().unwrap());
+                    vq.send(VisualQueue::Add(song)).expect("Cant add song to visual queue")
                 }
             }
             event::KeyCode::Char(' ') => {
@@ -73,6 +75,16 @@ pub fn handle_key(key:KeyEvent, jade: &mut Jade, mp: Sender<MusicPlayer>) -> boo
         match key.code {
             event::KeyCode::Up => {jade.queue_current_selection.select_previous()},
             event::KeyCode::Down => {jade.queue_current_selection.select_next()},
+            event::KeyCode::Char('d') => {
+                let selection = jade.queue_current_selection.selected();
+
+                if selection != None {
+                    let current_selection = selection.unwrap();
+                    jade.queue.remove(current_selection.clone());
+                    vq.send(VisualQueue::Remove(current_selection)).expect("Cant remove the song from the visual queue");
+                }
+
+            }
             _ => {}
         }
     }
