@@ -1,7 +1,6 @@
-use crate::FocusArea::{Music, Queue};
-use crate::musicplayer::MusicPlayer;
+use crate::FocusArea::{Music as Music_Area, Queue as Queue_Area};
 use crate::musicplayer::MusicPlayer::{End, NewSong, Pause, Stop, Volume};
-use crate::queue::VisualQueue;
+use crate::musicplayer::{MusicPlayer, Queue};
 use crate::{CONFIGFILE, Jade, VOLUMELEVELS};
 use crossterm::event;
 use crossterm::event::{KeyEvent, KeyEventKind};
@@ -12,7 +11,7 @@ pub fn handle_key(
     key: KeyEvent,
     jade: &mut Jade,
     mp: Sender<MusicPlayer>,
-    vq: Sender<VisualQueue>,
+    q: Sender<Queue>,
 ) -> bool {
     //Key filter
     if key.kind != KeyEventKind::Press {
@@ -28,7 +27,6 @@ pub fn handle_key(
             let toml_data = toml::to_string(&jade).unwrap();
             fs::write(CONFIGFILE, toml_data).expect("Cant write to file");
             mp.send(End).expect("Cant stop thread");
-            vq.send(VisualQueue::End).expect("Cant stop thread");
             return true;
         }
         //Audio controls
@@ -50,7 +48,7 @@ pub fn handle_key(
         }
         _ => {}
     }
-    if jade.focus_area == Music {
+    if jade.focus_area == Music_Area {
         match key.code {
             event::KeyCode::Up => jade.song_current_selection.select_previous(),
             event::KeyCode::Down => jade.song_current_selection.select_next(),
@@ -66,8 +64,7 @@ pub fn handle_key(
                 if let Some(i) = jade.song_current_selection.selected() {
                     let song = current_song(jade.music_location.clone(), &jade.songs, i);
                     jade.queue.push((song).parse().unwrap());
-                    vq.send(VisualQueue::Add(song))
-                        .expect("Cant add song to visual queue")
+                    q.send(Queue::Add(song)).expect("Cant send to queue");
                 }
             }
             event::KeyCode::Char(' ') => {
@@ -78,17 +75,17 @@ pub fn handle_key(
             }
             _ => {}
         }
-    } else if jade.focus_area == Queue {
+    } else if jade.focus_area == Queue_Area {
         match key.code {
             event::KeyCode::Up => jade.queue_current_selection.select_previous(),
             event::KeyCode::Down => jade.queue_current_selection.select_next(),
             event::KeyCode::Char('d') => {
                 let selection = jade.queue_current_selection.selected();
-                if selection.is_none() {
+                if !selection.is_none() {
                     let current_selection = selection.unwrap();
                     jade.queue.remove(current_selection);
-                    vq.send(VisualQueue::Remove(current_selection))
-                        .expect("Cant remove the song from the visual queue");
+                    q.send(Queue::Remove(selection.unwrap()))
+                        .expect("Cant remove from queue");
                 }
             }
             _ => {}
@@ -104,4 +101,3 @@ fn current_song(location: String, songs: &[String], i: usize) -> String {
         format!("{location}/{}", songs[i])
     }
 }
-

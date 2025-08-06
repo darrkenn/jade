@@ -1,13 +1,11 @@
 mod keyhandling;
 mod musicplayer;
-mod queue;
 mod render;
 mod run;
 mod song_information;
 
 use crate::FocusArea::{Music, Queue};
 use crate::musicplayer::create_mp;
-use crate::queue::{create_queue, create_visual_queue};
 use crate::run::run;
 use crate::song_information::get_songs_in_folder;
 use color_eyre::eyre::Result;
@@ -72,15 +70,13 @@ fn main() -> Result<()> {
     jade.queue_current_selection.select_first();
 
     // Thread creation
-    let mp = create_mp(jade.volume);
-    let qc = create_queue(mp.clone());
-    let vq = create_visual_queue(qc.clone());
+    let (mp, q) = create_mp(jade.volume);
 
     //Setup of UI
     color_eyre::install()?;
     crossterm::terminal::enable_raw_mode()?;
     let terminal = ratatui::init();
-    let result = run(terminal, &mut jade, mp, vq);
+    let result = run(terminal, &mut jade, mp, q);
     ratatui::restore();
     crossterm::terminal::disable_raw_mode()?;
 
