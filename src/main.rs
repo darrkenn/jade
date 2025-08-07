@@ -44,8 +44,6 @@ struct Jade {
     focus_area: FocusArea,
     #[serde(skip)]
     queue: Vec<String>,
-    #[serde(skip)]
-    current_position: u64,
 }
 
 impl Jade {

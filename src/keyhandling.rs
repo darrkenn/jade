@@ -88,6 +88,8 @@ pub fn handle_key(
                         .expect("Cant remove from queue");
                 }
             }
+            event::KeyCode::Backspace => q.send(Queue::Clear).expect("Cant clear queue"),
+
             _ => {}
         }
     }
