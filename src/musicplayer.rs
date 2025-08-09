@@ -38,11 +38,11 @@ pub fn create_mp(
 
         loop {
             if sink.empty() {
-                s_req.send(Request);
+                s_req.send(Request).expect("Cant send request");
                 thread::sleep(Duration::from_millis(30));
             }
 
-            let recieved_mp = r_mp.try_recv().ok();
+            let recieved_mp = r_mp.recv_timeout(Duration::from_millis(10)).ok();
             if let Some(message) = recieved_mp {
                 match message {
                     MusicPlayer::Pause => {

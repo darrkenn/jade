@@ -6,17 +6,18 @@ mod run;
 mod song_information;
 
 use crate::FocusArea::{Music, Queue};
-use crate::musicplayer::create_mp;
-use crate::queue::create_queue;
+use crate::musicplayer::{MusicPlayer, create_mp};
+use crate::queue::{UpdateQueue, create_queue};
 use crate::run::run;
 use crate::song_information::get_songs_in_folder;
 use color_eyre::eyre::Result;
+use crossbeam_channel::{Receiver, Sender, bounded, unbounded};
 use ratatui::widgets::ListState;
 use serde::{Deserialize, Serialize};
+use std::env::home_dir;
 use std::fs;
+use std::path::PathBuf;
 
-const CONFIGFILE: &str = "config.toml";
-//There has to be a better way to do this.
 const VOLUMELEVELS: [f32; 11] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
 const SUPPORTED_FORMATS: [&str; 4] = ["wav", "mp3", "ogg", "flac"];
 
@@ -28,8 +29,7 @@ enum FocusArea {
 }
 #[derive(Deserialize, Serialize)]
 struct Jade {
-    music_location: String,
-    volume: f32,
+    config: Config,
     #[serde(skip)]
     song_current_selection: ListState,
     #[serde(skip)]
@@ -42,14 +42,9 @@ struct Jade {
     queue: Vec<String>,
     #[serde(skip)]
     songs: Songs,
+    #[serde(skip)]
+    channels: Channels,
 }
-#[derive(Default)]
-struct Songs {
-    titles: Vec<String>,
-    lengths: Vec<u32>,
-    visual_lengths: Vec<String>,
-}
-
 impl Jade {
     fn change_focus_area(&mut self) {
         match self.focus_area {
@@ -58,31 +53,67 @@ impl Jade {
         }
     }
 }
+#[derive(Deserialize, Serialize)]
+struct Config {
+    music_location: PathBuf,
+    volume: f32,
+    #[serde(skip)]
+    location: PathBuf,
+}
+
+#[derive(Default)]
+struct Songs {
+    titles: Vec<String>,
+    lengths: Vec<u32>,
+    visual_lengths: Vec<String>,
+}
+struct Channels {
+    s_mp: Sender<MusicPlayer>,
+    r_mp: Receiver<MusicPlayer>,
+    s_q: Sender<queue::Queue>,
+    r_update: Receiver<UpdateQueue>,
+}
+impl Default for Channels {
+    fn default() -> Self {
+        let (s_mp, r_mp) = unbounded::<MusicPlayer>();
+        let (s_q, _) = unbounded::<queue::Queue>();
+        let (_, r_update) = bounded::<UpdateQueue>(1);
+        Channels {
+            s_mp,
+            r_mp,
+            s_q,
+            r_update,
+        }
+    }
+}
 
 fn main() -> Result<()> {
-    //Reading config
-    let jade_string = fs::read_to_string(CONFIGFILE).expect("Cant find config file");
+    //Config
+    let config = get_config();
+    let jade_string = fs::read_to_string(&config).expect("Cant find config file");
     let mut jade: Jade = toml::from_str((jade_string).as_ref()).expect("Cant parse file");
     //Setting values
-    jade.sound_increment = find_volume_location(jade.volume);
+    jade.config.location = config;
+    jade.sound_increment = find_volume_location(jade.config.volume);
     (
         jade.songs.titles,
         jade.songs.lengths,
         jade.songs.visual_lengths,
-    ) = get_songs_in_folder(jade.music_location.parse()?);
+    ) = get_songs_in_folder(jade.config.music_location.clone());
     jade.focus_area = Music;
     jade.song_current_selection.select_first();
     jade.queue_current_selection.select_first();
 
     // Thread creation
-    let (s_mp, r_mp, r_req) = create_mp(jade.volume);
-    let s_q = create_queue(s_mp.clone(), r_req);
+    let r_req;
+    (jade.channels.s_mp, jade.channels.r_mp, r_req) = create_mp(jade.config.volume);
+    (jade.channels.s_q, jade.channels.r_update) = create_queue(jade.channels.s_mp.clone(), r_req);
 
     //Setup of UI
     color_eyre::install()?;
     crossterm::terminal::enable_raw_mode()?;
     let terminal = ratatui::init();
-    let result = run(terminal, &mut jade, s_mp, s_q);
+    let result = run(terminal, &mut jade);
     ratatui::restore();
     crossterm::terminal::disable_raw_mode()?;
 
@@ -98,4 +129,14 @@ fn find_volume_location(jade_volume: f32) -> u8 {
         }
     }
     volume_location
+}
+
+fn get_config() -> PathBuf {
+    if let Some(home) = home_dir() {
+        let mut config_location = home.to_str().unwrap().to_owned();
+        config_location.push_str("/.config/jade/config.toml");
+        PathBuf::from(config_location)
+    } else {
+        panic!("Cant find config file");
+    }
 }
