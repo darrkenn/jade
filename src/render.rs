@@ -1,34 +1,40 @@
 mod music_area;
 mod queue_area;
 
-use unicode_width::UnicodeWidthStr;
-use ratatui::Frame;
-use ratatui::layout::{Constraint, Layout, Rect};
-use ratatui::layout::HorizontalAlignment::Center;
-use ratatui::prelude::Direction;
-use ratatui::style::{Color, Modifier, Style};
-use ratatui::style::Color::{Green};
-use ratatui::widgets::{Block, BorderType, HighlightSpacing, List, ListDirection, ListItem, Widget};
 use crate::FocusArea::{Music, Queue};
 use crate::Jade;
 use crate::render::music_area::{render_song_list, render_time_list};
-use crate::render::queue_area::{render_queue_list};
+use crate::render::queue_area::render_queue_list;
+use ratatui::Frame;
+use ratatui::layout::HorizontalAlignment::Center;
+use ratatui::layout::{Constraint, Layout, Rect};
+use ratatui::prelude::Direction;
+use ratatui::style::Color::Green;
+use ratatui::style::{Color, Modifier, Style};
+use ratatui::widgets::{
+    Block, BorderType, HighlightSpacing, List, ListDirection, ListItem, Widget,
+};
+use unicode_width::UnicodeWidthStr;
 
-pub fn render(frame: &mut Frame, jade: &mut Jade) {
+pub fn render<'a>(frame: &'a mut Frame, jade: &mut Jade) {
     let area = frame.area();
 
-    let vertical_chunks = Layout::new (
-        Direction::Vertical, [Constraint::Percentage(70), Constraint::Percentage(30)]
-    ).split(area);
+    let vertical_chunks = Layout::new(
+        Direction::Vertical,
+        [Constraint::Percentage(70), Constraint::Percentage(30)],
+    )
+    .split(area);
 
     Block::bordered()
         .border_type(BorderType::Rounded)
         .border_style(Style::default().fg(Color::White))
         .render(vertical_chunks[1], frame.buffer_mut());
 
-    let horizontal_chunks = Layout::new (
-        Direction::Horizontal, [Constraint::Percentage(55), Constraint::Percentage(45)]
-    ).split(vertical_chunks[0]);
+    let horizontal_chunks = Layout::new(
+        Direction::Horizontal,
+        [Constraint::Percentage(55), Constraint::Percentage(45)],
+    )
+    .split(vertical_chunks[0]);
 
     Block::bordered()
         .border_type(BorderType::Rounded)
@@ -49,10 +55,8 @@ pub fn render(frame: &mut Frame, jade: &mut Jade) {
             Style::default().fg(Color::Cyan)
         } else {
             Style::default().fg(Color::White)
-        }
-        )
+        })
         .render(horizontal_chunks[1], frame.buffer_mut());
-
 
     //Area for the songs
     let [left_inner_area] = Layout::vertical([Constraint::Fill(1)])
@@ -64,8 +68,10 @@ pub fn render(frame: &mut Frame, jade: &mut Jade) {
         .areas(horizontal_chunks[1]);
 
     let left_area_chunks = Layout::new(
-        Direction::Horizontal, [Constraint::Percentage(80), Constraint::Percentage(20)]
-    ).split(left_inner_area);
+        Direction::Horizontal,
+        [Constraint::Percentage(80), Constraint::Percentage(20)],
+    )
+    .split(left_inner_area);
 
     //Rendering of widgets
     render_song_list(jade, left_area_chunks[0], frame);
@@ -81,10 +87,17 @@ pub fn generate_list(values: &Vec<String>, area: Rect) -> List {
             let title = if song.width() < max {
                 song.to_string()
             } else {
-                format!("{}...", song.chars().take(max.saturating_sub(3)).collect::<String>().as_str())
+                format!(
+                    "{}...",
+                    song.chars()
+                        .take(max.saturating_sub(3))
+                        .collect::<String>()
+                        .as_str()
+                )
             };
             ListItem::from(title)
-        }).collect();
+        })
+        .collect();
 
     let list = List::new(map)
         .style(Style::new().gray())
@@ -95,6 +108,3 @@ pub fn generate_list(values: &Vec<String>, area: Rect) -> List {
         .direction(ListDirection::TopToBottom);
     list
 }
-
-
-

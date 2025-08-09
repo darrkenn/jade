@@ -1,11 +1,12 @@
 use crate::FocusArea::{Music as Music_Area, Queue as Queue_Area};
+use crate::musicplayer::MusicPlayer;
 use crate::musicplayer::MusicPlayer::{End, NewSong, Pause, Stop, Volume};
-use crate::musicplayer::{MusicPlayer, Queue};
+use crate::queue::Queue;
 use crate::{CONFIGFILE, Jade, VOLUMELEVELS};
+use crossbeam_channel::Sender;
 use crossterm::event;
 use crossterm::event::{KeyEvent, KeyEventKind};
 use std::fs;
-use std::sync::mpsc::Sender;
 
 pub fn handle_key(
     key: KeyEvent,
@@ -56,13 +57,13 @@ pub fn handle_key(
             event::KeyCode::Enter => {
                 //Essential formatting for correct reading of song.
                 if let Some(i) = jade.song_current_selection.selected() {
-                    let song = current_song(jade.music_location.clone(), &jade.songs, i);
+                    let song = current_song(jade.music_location.clone(), &jade.songs.titles, i);
                     mp.send(NewSong(song)).expect("UhOh");
                 }
             }
             event::KeyCode::Char('q') => {
                 if let Some(i) = jade.song_current_selection.selected() {
-                    let song = current_song(jade.music_location.clone(), &jade.songs, i);
+                    let song = current_song(jade.music_location.clone(), &jade.songs.titles, i);
                     jade.queue.push((song).parse().unwrap());
                     q.send(Queue::Add(song)).expect("Cant send to queue");
                 }
@@ -81,10 +82,9 @@ pub fn handle_key(
             event::KeyCode::Down => jade.queue_current_selection.select_next(),
             event::KeyCode::Char('d') => {
                 let selection = jade.queue_current_selection.selected();
-                if !selection.is_none() {
-                    let current_selection = selection.unwrap();
+                if let Some(current_selection) = selection {
                     jade.queue.remove(current_selection);
-                    q.send(Queue::Remove(selection.unwrap()))
+                    q.send(Queue::Remove(current_selection))
                         .expect("Cant remove from queue");
                 }
             }

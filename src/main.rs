@@ -1,11 +1,13 @@
 mod keyhandling;
 mod musicplayer;
+mod queue;
 mod render;
 mod run;
 mod song_information;
 
 use crate::FocusArea::{Music, Queue};
 use crate::musicplayer::create_mp;
+use crate::queue::create_queue;
 use crate::run::run;
 use crate::song_information::get_songs_in_folder;
 use color_eyre::eyre::Result;
@@ -35,15 +37,17 @@ struct Jade {
     #[serde(skip)]
     sound_increment: u8,
     #[serde(skip)]
-    songs: Vec<String>,
-    #[serde(skip)]
-    lengths: Vec<u32>,
-    #[serde(skip)]
-    visual_lengths: Vec<String>,
-    #[serde(skip)]
     focus_area: FocusArea,
     #[serde(skip)]
     queue: Vec<String>,
+    #[serde(skip)]
+    songs: Songs,
+}
+#[derive(Default)]
+struct Songs {
+    titles: Vec<String>,
+    lengths: Vec<u32>,
+    visual_lengths: Vec<String>,
 }
 
 impl Jade {
@@ -61,20 +65,24 @@ fn main() -> Result<()> {
     let mut jade: Jade = toml::from_str((jade_string).as_ref()).expect("Cant parse file");
     //Setting values
     jade.sound_increment = find_volume_location(jade.volume);
-    (jade.songs, jade.lengths, jade.visual_lengths) =
-        get_songs_in_folder(jade.music_location.parse()?);
+    (
+        jade.songs.titles,
+        jade.songs.lengths,
+        jade.songs.visual_lengths,
+    ) = get_songs_in_folder(jade.music_location.parse()?);
     jade.focus_area = Music;
     jade.song_current_selection.select_first();
     jade.queue_current_selection.select_first();
 
     // Thread creation
-    let (mp, q) = create_mp(jade.volume);
+    let (s_mp, r_mp, r_req) = create_mp(jade.volume);
+    let s_q = create_queue(s_mp.clone(), r_req);
 
     //Setup of UI
     color_eyre::install()?;
     crossterm::terminal::enable_raw_mode()?;
     let terminal = ratatui::init();
-    let result = run(terminal, &mut jade, mp, q);
+    let result = run(terminal, &mut jade, s_mp, s_q);
     ratatui::restore();
     crossterm::terminal::disable_raw_mode()?;
 
