@@ -1,3 +1,4 @@
+mod info;
 mod keyhandling;
 mod musicplayer;
 mod queue;
@@ -6,7 +7,8 @@ mod run;
 mod song_information;
 
 use crate::FocusArea::{Music, Queue};
-use crate::musicplayer::{MusicPlayer, create_mp};
+use crate::info::{Info, create_info};
+use crate::musicplayer::{MusicPlayer, Request, create_mp};
 use crate::queue::{UpdateQueue, create_queue};
 use crate::run::run;
 use crate::song_information::get_songs_in_folder;
@@ -44,6 +46,8 @@ struct Jade {
     songs: Songs,
     #[serde(skip)]
     channels: Channels,
+    #[serde(skip)]
+    current: Current,
 }
 impl Jade {
     fn change_focus_area(&mut self) {
@@ -67,22 +71,33 @@ struct Songs {
     lengths: Vec<u32>,
     visual_lengths: Vec<String>,
 }
+
+#[derive(Default)]
+struct Current {
+    title: String,
+    length: u32,
+    position: u32,
+}
+
 struct Channels {
     s_mp: Sender<MusicPlayer>,
     r_mp: Receiver<MusicPlayer>,
     s_q: Sender<queue::Queue>,
     r_update: Receiver<UpdateQueue>,
+    r_ui: Receiver<Info>,
 }
 impl Default for Channels {
     fn default() -> Self {
         let (s_mp, r_mp) = unbounded::<MusicPlayer>();
         let (s_q, _) = unbounded::<queue::Queue>();
         let (_, r_update) = bounded::<UpdateQueue>(1);
+        let (_, r_ui) = bounded::<Info>(2);
         Channels {
             s_mp,
             r_mp,
             s_q,
             r_update,
+            r_ui,
         }
     }
 }
@@ -105,8 +120,12 @@ fn main() -> Result<()> {
     jade.queue_current_selection.select_first();
 
     // Thread creation
-    let r_req;
-    (jade.channels.s_mp, jade.channels.r_mp, r_req) = create_mp(jade.config.volume);
+    let r_req: Receiver<Request>;
+    let s_info: Sender<Info>;
+
+    (s_info, jade.channels.r_ui) = create_info();
+
+    (jade.channels.s_mp, jade.channels.r_mp, r_req) = create_mp(jade.config.volume, s_info);
     (jade.channels.s_q, jade.channels.r_update) = create_queue(jade.channels.s_mp.clone(), r_req);
 
     //Setup of UI

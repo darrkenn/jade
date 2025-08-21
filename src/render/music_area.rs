@@ -17,7 +17,7 @@ pub fn render_music_area(jade: &mut Jade, area: Rect, frame: &mut Frame) {
         .border_style(if jade.focus_area == Music {
             Style::default().fg(Color::Cyan)
         } else {
-            Style::default().fg(Color::Red)
+            Style::default().fg(Color::White)
         })
         .render(area, frame.buffer_mut());
 
@@ -28,7 +28,7 @@ pub fn render_music_area(jade: &mut Jade, area: Rect, frame: &mut Frame) {
     //Splits songs area into title+time
     let left_area_chunks = Layout::new(
         Direction::Horizontal,
-        [Constraint::Percentage(80), Constraint::Percentage(20)],
+        [Constraint::Percentage(90), Constraint::Percentage(10)],
     )
     .split(left_inner_area);
 

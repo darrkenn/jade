@@ -5,11 +5,13 @@ use std::io::BufReader;
 use std::time::Duration;
 use std::{panic, thread};
 
+use crate::info::Info;
+
 pub enum MusicPlayer {
     Pause,
     Stop,
     Volume(f32),
-    NewSong(String),
+    NewSong(String, u32),
     End,
 }
 
@@ -17,6 +19,7 @@ pub struct Request;
 
 pub fn create_mp(
     volume: f32,
+    s_info: Sender<Info>,
 ) -> (
     Sender<MusicPlayer>,
     Receiver<MusicPlayer>,
@@ -28,7 +31,6 @@ pub fn create_mp(
 
     let (s_req, r_req) = bounded::<Request>(1);
     let r_req_clone = r_req.clone();
-
     thread::spawn(move || {
         //Sink setup
         let stream_handle =
@@ -38,9 +40,17 @@ pub fn create_mp(
 
         loop {
             if sink.empty() {
+                s_info
+                    .send(Info::Clear)
+                    .expect("Couldnt send message to info thread");
+
                 s_req.send(Request).expect("Cant send request");
                 thread::sleep(Duration::from_millis(30));
-            }
+            } else {
+                s_info
+                    .send(Info::Position(sink.get_pos().as_secs() as u32))
+                    .expect("Couldnt send message to info thread");
+            };
 
             let recieved_mp = r_mp.recv_timeout(Duration::from_millis(10)).ok();
             if let Some(message) = recieved_mp {
@@ -53,6 +63,9 @@ pub fn create_mp(
                         }
                     }
                     MusicPlayer::Stop => {
+                        s_info
+                            .send(Info::Clear)
+                            .expect("Couldnt send message to info thread");
                         sink.clear();
                     }
                     MusicPlayer::Volume(volume) => {
@@ -63,13 +76,17 @@ pub fn create_mp(
                             sink.set_volume(volume);
                         }
                     }
-                    MusicPlayer::NewSong(song) => {
+                    MusicPlayer::NewSong(song, length) => {
                         sink.clear();
+                        s_info
+                            .send(Info::Song(song.clone(), length))
+                            .expect("Couldnt send message to info thread");
                         let song = create_song(song);
                         sink.append(song);
                         sink.play();
                     }
                     MusicPlayer::End => {
+                        s_info.send(Info::End).expect("Cant end thread");
                         break;
                     }
                 }

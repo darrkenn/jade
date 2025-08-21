@@ -54,25 +54,30 @@ pub fn handle_key(key: KeyEvent, jade: &mut Jade) -> bool {
             event::KeyCode::Enter => {
                 //Essential formatting for correct reading of song.
                 if let Some(i) = jade.song_current_selection.selected() {
-                    let song = current_song(
+                    let (song, length) = current_song(
                         jade.config.music_location.to_str().unwrap().to_string(),
                         &jade.songs.titles,
+                        &jade.songs.lengths,
                         i,
                     );
-                    jade.channels.s_mp.send(NewSong(song)).expect("UhOh");
+                    jade.channels
+                        .s_mp
+                        .send(NewSong(song, length))
+                        .expect("UhOh");
                 }
             }
             event::KeyCode::Char('q') => {
                 if let Some(i) = jade.song_current_selection.selected() {
-                    let song = current_song(
+                    let (song, length) = current_song(
                         jade.config.music_location.to_str().unwrap().to_string(),
                         &jade.songs.titles,
+                        &jade.songs.lengths,
                         i,
                     );
                     jade.queue.push((song).parse().unwrap());
                     jade.channels
                         .s_q
-                        .send(Queue::Add(song))
+                        .send(Queue::Add(song, length))
                         .expect("Cant send to queue");
                 }
             }
@@ -110,10 +115,10 @@ pub fn handle_key(key: KeyEvent, jade: &mut Jade) -> bool {
     false
 }
 
-fn current_song(location: String, songs: &[String], i: usize) -> String {
+fn current_song(location: String, songs: &[String], lengths: &[u32], i: usize) -> (String, u32) {
     if location.ends_with("/") {
-        format!("{location}{}", songs[i])
+        (format!("{location}{}", songs[i]), lengths[i])
     } else {
-        format!("{location}/{}", songs[i])
+        (format!("{location}/{}", songs[i]), lengths[i])
     }
 }

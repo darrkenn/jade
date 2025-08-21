@@ -1,6 +1,6 @@
 use ratatui::{
     layout::Rect,
-    style::{Color::Green, Style, Stylize},
+    style::{Color::Green, Style},
     widgets::{HighlightSpacing, List, ListDirection, ListItem},
 };
 use unicode_width::UnicodeWidthStr;
