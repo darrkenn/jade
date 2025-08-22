@@ -17,8 +17,8 @@ use crossbeam_channel::{Receiver, Sender, bounded, unbounded};
 use ratatui::widgets::ListState;
 use serde::{Deserialize, Serialize};
 use std::env::home_dir;
-use std::fs;
 use std::path::PathBuf;
+use std::{fs, process};
 
 const VOLUMELEVELS: [f32; 11] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
 const SUPPORTED_FORMATS: [&str; 4] = ["wav", "mp3", "ogg", "flac"];
@@ -132,11 +132,10 @@ fn main() -> Result<()> {
     color_eyre::install()?;
     crossterm::terminal::enable_raw_mode()?;
     let terminal = ratatui::init();
-    let result = run(terminal, &mut jade);
+    let _ = run(terminal, &mut jade);
     ratatui::restore();
     crossterm::terminal::disable_raw_mode()?;
-
-    result
+    process::exit(0);
 }
 
 fn find_volume_location(jade_volume: f32) -> u8 {

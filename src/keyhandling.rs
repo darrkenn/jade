@@ -1,5 +1,5 @@
 use crate::FocusArea::{Music as Music_Area, Queue as Queue_Area};
-use crate::musicplayer::MusicPlayer::{End, NewSong, Pause, Stop, Volume};
+use crate::musicplayer::MusicPlayer::{NewSong, Pause, Stop, Volume};
 use crate::queue::Queue;
 use crate::{Jade, VOLUMELEVELS};
 use crossterm::event;
@@ -20,7 +20,6 @@ pub fn handle_key(key: KeyEvent, jade: &mut Jade) -> bool {
         event::KeyCode::Esc => {
             let toml_data = toml::to_string(&jade).unwrap();
             fs::write(jade.config.location.clone(), toml_data).expect("Cant write to file");
-            jade.channels.s_mp.send(End).expect("Cant stop thread");
             return true;
         }
         //Audio controls

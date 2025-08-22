@@ -39,7 +39,6 @@ pub fn run(mut terminal: DefaultTerminal, jade: &mut Jade) -> color_eyre::Result
                     jade.current.length = 0;
                     jade.current.position = 0;
                 }
-                _ => {}
             }
         }
 

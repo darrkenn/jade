@@ -12,7 +12,6 @@ pub enum MusicPlayer {
     Stop,
     Volume(f32),
     NewSong(String, u32),
-    End,
 }
 
 pub struct Request;
@@ -84,10 +83,6 @@ pub fn create_mp(
                         let song = create_song(song);
                         sink.append(song);
                         sink.play();
-                    }
-                    MusicPlayer::End => {
-                        s_info.send(Info::End).expect("Cant end thread");
-                        break;
                     }
                 }
             }

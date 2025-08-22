@@ -37,7 +37,11 @@ pub fn render_music_area(jade: &mut Jade, area: Rect, frame: &mut Frame) {
 }
 
 pub fn render_song_list(jade: &mut Jade, area: Rect, frame: &mut Frame) {
-    let list = generate_list(&jade.songs.titles, area);
+    let list = generate_list(
+        &jade.songs.titles,
+        area,
+        jade.config.music_location.to_str().unwrap(),
+    );
     frame.render_stateful_widget(list, area, &mut jade.song_current_selection);
 }
 pub fn render_time_list(jade: &mut Jade, area: Rect, frame: &mut Frame) {

@@ -6,7 +6,6 @@ pub enum Info {
     Song(String, u32),
     Position(u32),
     Clear,
-    End,
 }
 
 pub fn create_info() -> (Sender<Info>, Receiver<Info>) {
@@ -22,17 +21,16 @@ pub fn create_info() -> (Sender<Info>, Receiver<Info>) {
                 match message {
                     Info::Song(song, length) => {
                         s_ui.send(Info::Song(song, length))
-                            .expect("Cant send message to UI thread.");
+                            .expect("Cant send message to UI thread. Song");
                     }
                     Info::Position(x) => {
                         s_ui.send(Info::Position(x))
-                            .expect("Cant send message to UI thread");
+                            .expect("Cant send message to UI thread Position");
                     }
                     Info::Clear => {
                         s_ui.send(Info::Clear)
-                            .expect("Cant send message to UI thread");
+                            .expect("Cant send message to UI thread CLEAR");
                     }
-                    Info::End => break,
                 }
             }
         }

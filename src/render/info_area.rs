@@ -30,9 +30,9 @@ pub fn render_info_area(jade: &mut Jade, area: Rect, frame: &mut Frame) {
     let left_area_chunks = Layout::new(
         Direction::Vertical,
         [
-            Constraint::Percentage(30),
-            Constraint::Percentage(40),
-            Constraint::Percentage(30),
+            Constraint::Length(2),
+            Constraint::Length(4),
+            Constraint::Length(4),
         ],
     )
     .split(left_area);
@@ -77,6 +77,7 @@ fn progress_bar(position: u32, length: u32, area: Rect, frame: &mut Frame) {
                 .border_style(Style::default().bg(Color::Black).fg(Color::White)),
         )
         .gauge_style(Style::default().bg(Color::Gray).fg(Color::Cyan))
+        .label("")
         .ratio(ratio);
     frame.render_widget(gauge, inner_area);
 }
