@@ -1,8 +1,3 @@
-mod generate_list;
-mod info_area;
-mod music_area;
-mod queue_area;
-
 use crate::Jade;
 use crate::render::info_area::render_info_area;
 use crate::render::music_area::render_music_area;

@@ -1,7 +1,7 @@
 use crate::Jade;
-use crate::info::Info;
 use crate::keyhandling::handle_key;
 use crate::render::render;
+use crate::threads::info::Info;
 use crossterm::event;
 use crossterm::event::Event;
 use ratatui::DefaultTerminal;
@@ -42,7 +42,7 @@ pub fn run(mut terminal: DefaultTerminal, jade: &mut Jade) -> color_eyre::Result
             }
         }
 
-        terminal.draw(|f| render(f, jade))?;
+        terminal.draw(|f| render::render(f, jade))?;
 
         //Event reading
         if event::poll(Duration::from_millis(10))? {

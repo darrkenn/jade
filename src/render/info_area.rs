@@ -1,9 +1,9 @@
 use crate::Jade;
 use ratatui::Frame;
-use ratatui::layout::{Constraint, Direction, Layout, Position, Rect};
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::prelude::Widget;
-use ratatui::style::{Color, Style, Styled};
-use ratatui::widgets::{Block, BorderType, Borders, Gauge, Padding, Paragraph};
+use ratatui::style::{Color, Style};
+use ratatui::widgets::{Block, BorderType, Gauge, Paragraph};
 
 pub fn render_info_area(jade: &mut Jade, area: Rect, frame: &mut Frame) {
     Block::bordered()

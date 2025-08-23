@@ -1,5 +1,4 @@
-use crate::FocusArea::Queue;
-use crate::Jade;
+use crate::jade::{FocusArea::Queue as Queue_Area, Jade};
 use crate::render::generate_list::generate_list;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout};
@@ -13,7 +12,7 @@ pub fn render_queue_area(jade: &mut Jade, area: Rect, frame: &mut Frame) {
         .border_type(BorderType::Rounded)
         .title_top("Queue")
         .title_alignment(Center)
-        .border_style(if jade.focus_area == Queue {
+        .border_style(if jade.focus_area == Queue_Area {
             Style::default().fg(Color::Cyan)
         } else {
             Style::default().fg(Color::White)

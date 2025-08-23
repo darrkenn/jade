@@ -1,5 +1,4 @@
-use crate::FocusArea::Music;
-use crate::Jade;
+use crate::jade::{FocusArea::Music as Music_Area, Jade};
 use crate::render::generate_list::generate_list;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout};
@@ -14,7 +13,7 @@ pub fn render_music_area(jade: &mut Jade, area: Rect, frame: &mut Frame) {
         .title_top("Music")
         .title_alignment(Center)
         .title_style(Style::default().add_modifier(Modifier::BOLD))
-        .border_style(if jade.focus_area == Music {
+        .border_style(if jade.focus_area == Music_Area {
             Style::default().fg(Color::Cyan)
         } else {
             Style::default().fg(Color::White)

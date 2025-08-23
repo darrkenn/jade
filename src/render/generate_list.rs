@@ -10,8 +10,7 @@ pub fn generate_list(values: &[String], area: Rect, music_location: &str) -> Lis
     let map: Vec<ListItem> = values
         .iter()
         .map(|song| {
-            let mut title: String = String::new();
-
+            let title: String;
             if let Some(split) = song.split(music_location).last() {
                 title = format_string(split, max);
             } else {

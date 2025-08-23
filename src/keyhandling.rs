@@ -1,6 +1,6 @@
-use crate::FocusArea::{Music as Music_Area, Queue as Queue_Area};
-use crate::musicplayer::MusicPlayer::{NewSong, Pause, Stop, Volume};
-use crate::queue::Queue;
+use crate::jade::FocusArea::{Music as Music_Area, Queue as Queue_Area};
+use crate::threads::musicplayer::MusicPlayer::{NewSong, Pause, Stop, Volume};
+use crate::threads::queue::Queue::*;
 use crate::{Jade, VOLUMELEVELS};
 use crossterm::event;
 use crossterm::event::{KeyEvent, KeyEventKind};
@@ -76,7 +76,7 @@ pub fn handle_key(key: KeyEvent, jade: &mut Jade) -> bool {
                     jade.queue.push((song).parse().unwrap());
                     jade.channels
                         .s_q
-                        .send(Queue::Add(song, length))
+                        .send(Add(song, length))
                         .expect("Cant send to queue");
                 }
             }
@@ -98,15 +98,11 @@ pub fn handle_key(key: KeyEvent, jade: &mut Jade) -> bool {
                     jade.queue.remove(current_selection);
                     jade.channels
                         .s_q
-                        .send(Queue::Remove(current_selection))
+                        .send(Remove(current_selection))
                         .expect("Cant remove from queue");
                 }
             }
-            event::KeyCode::Backspace => jade
-                .channels
-                .s_q
-                .send(Queue::Clear)
-                .expect("Cant clear queue"),
+            event::KeyCode::Backspace => jade.channels.s_q.send(Clear).expect("Cant clear queue"),
 
             _ => {}
         }

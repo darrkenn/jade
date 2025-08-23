@@ -13,7 +13,19 @@ rodio = "0.21.1"
 unicode-width = "0.2.0"
 symphonia = { version = "0.5.4", features = ["mp3", "flac", "vorbis"] }
 crossbeam-channel = "0.5.15"
+id3 = "1.16.3"
 
 [profile.dev]
 opt-level = 1
 incremental = true
+
+[profile.release]
+lto = false
+codegen-units = 16
+opt-level = 3
+debug = false
+strip = "none"
+debug-assertions = false
+overflow-checks = false
+rpath = false
+incremental = false

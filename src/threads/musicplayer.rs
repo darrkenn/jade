@@ -5,7 +5,7 @@ use std::io::BufReader;
 use std::time::Duration;
 use std::{panic, thread};
 
-use crate::info::Info;
+use crate::Info;
 
 pub enum MusicPlayer {
     Pause,

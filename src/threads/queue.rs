@@ -2,7 +2,7 @@ use crossbeam_channel::{Receiver, Sender};
 use crossbeam_channel::{bounded, unbounded};
 use std::{thread, time::Duration};
 
-use crate::musicplayer::{MusicPlayer, Request};
+use crate::{MusicPlayer, Request};
 
 pub enum Queue {
     Add(String, u32),

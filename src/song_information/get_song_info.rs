@@ -63,4 +63,3 @@ fn get_visual_lengths(lengths: Vec<u32>) -> Vec<String> {
     }
     visual_lengths
 }
-
