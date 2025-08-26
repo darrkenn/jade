@@ -5,46 +5,28 @@ use ratatui::{
 };
 use unicode_width::UnicodeWidthStr;
 
-pub fn generate_list(values: &[String], area: Rect, music_location: &str) -> List<'static> {
+pub fn generate_list(values: &[String], area: Rect) -> List<'static> {
     let max = area.width.saturating_sub(10) as usize;
-    let map: Vec<ListItem> = values
+    let values: Vec<ListItem> = values
         .iter()
         .map(|song| {
-            let title: String;
-            if let Some(split) = song.split(music_location).last() {
-                title = format_string(split, max);
+            let title = if song.width() < max {
+                song.clone()
             } else {
-                title = format_string(song, max);
-            }
+                format!(
+                    "{}...",
+                    song.chars().take(max.saturating_sub(3)).collect::<String>()
+                )
+            };
             ListItem::from(title)
         })
         .collect();
 
-    List::new(map)
+    List::new(values)
         .style(Style::new().gray())
         .highlight_style(Style::default().bold().fg(Green))
         .highlight_spacing(HighlightSpacing::Always)
         .highlight_symbol("-> ")
         .repeat_highlight_symbol(true)
         .direction(ListDirection::TopToBottom)
-}
-
-fn format_string(title: &str, max: usize) -> String {
-    if title.width() < max {
-        title.to_string();
-        let mut split: Vec<&str> = title.split(".").collect();
-        if !split.is_empty() {
-            split.pop();
-        }
-        split.join(".").to_string()
-    } else {
-        format!(
-            "{}...",
-            title
-                .chars()
-                .take(max.saturating_sub(3))
-                .collect::<String>()
-                .as_str()
-        )
-    }
 }

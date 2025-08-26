@@ -1,28 +1,6 @@
-use crate::SUPPORTED_FORMATS;
-use std::fs;
 use std::fs::File;
-use std::path::{Path, PathBuf};
 use symphonia::core::io::MediaSourceStream;
 use symphonia::default::get_probe;
-
-pub fn get_songs_in_folder(music_folder: PathBuf) -> (Vec<String>, Vec<u32>, Vec<String>) {
-    let mut songs = Vec::new();
-    let mut files: Vec<File> = Vec::new();
-    if let Ok(entries) = fs::read_dir(music_folder) {
-        for entry in entries.flatten() {
-            if SUPPORTED_FORMATS.contains(&entry.path().extension().unwrap().to_str().unwrap()) {
-                songs.push(entry.file_name().to_str().unwrap().to_string());
-                let file = &entry.path().to_string_lossy().to_string();
-                let path = Path::new(&file);
-                files.push(File::open(path).expect("Cant open file"))
-            }
-        }
-    }
-
-    let song_lengths = get_song_lengths(files);
-    let visual_song_lengths = get_visual_lengths(song_lengths.clone());
-    (songs, song_lengths, visual_song_lengths)
-}
 
 fn get_song_lengths(files: Vec<File>) -> Vec<u32> {
     let mut lengths: Vec<u32> = Vec::new();

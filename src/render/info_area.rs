@@ -1,11 +1,12 @@
-use crate::Jade;
+use crate::App;
+use edar::FormatDuration;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::prelude::Widget;
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, BorderType, Gauge, Paragraph};
 
-pub fn render_info_area(jade: &mut Jade, area: Rect, frame: &mut Frame) {
+pub fn render_info_area(app: &mut App, area: Rect, frame: &mut Frame) {
     Block::bordered()
         .border_type(BorderType::Rounded)
         .border_style(Style::default().fg(Color::White))
@@ -38,15 +39,26 @@ pub fn render_info_area(jade: &mut Jade, area: Rect, frame: &mut Frame) {
     .split(left_area);
 
     song_info(
-        jade.current.title.to_owned(),
-        jade.current.length,
+        app.current.song.metadata.title.clone().unwrap_or_else(|| {
+            let mut split: Vec<&str> = app.current.song.file_name.split(".").collect();
+            if !split.is_empty() {
+                split.pop();
+            }
+            split.join(".").to_string()
+        }),
+        app.current.song.metadata.duration.format(),
         left_area_chunks[0],
         frame,
     );
 
     progress_bar(
-        jade.current.position,
-        jade.current.length,
+        app.current.position,
+        app.current
+            .song
+            .metadata
+            .duration
+            .map(|d| d.as_secs() as u32)
+            .unwrap_or_else(|| 0),
         left_area_chunks[1],
         frame,
     );
@@ -82,7 +94,7 @@ fn progress_bar(position: u32, length: u32, area: Rect, frame: &mut Frame) {
     frame.render_widget(gauge, inner_area);
 }
 
-fn song_info(title: String, length: u32, area: Rect, frame: &mut Frame) {
+fn song_info(title: String, length: String, area: Rect, frame: &mut Frame) {
     let area_chunks = Layout::new(
         Direction::Vertical,
         [Constraint::Length(1), Constraint::Length(1)],
@@ -92,7 +104,7 @@ fn song_info(title: String, length: u32, area: Rect, frame: &mut Frame) {
     let title =
         Paragraph::new(format!("Title: {}", title)).style(Style::default().bold().fg(Color::White));
 
-    let length = Paragraph::new(format!("Length: {}", visual_length(length)))
+    let length = Paragraph::new(format!("Length: {}", length))
         .style(Style::default().bold().fg(Color::White));
 
     frame.render_widget(title, area_chunks[0]);

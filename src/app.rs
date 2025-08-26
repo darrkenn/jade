@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use crossbeam_channel::{Receiver, Sender, bounded, unbounded};
+use edar::Metadata;
 use ratatui::widgets::ListState;
 use serde::{Deserialize, Serialize};
 
@@ -17,7 +18,7 @@ pub enum FocusArea {
     Queue,
 }
 #[derive(Deserialize, Serialize)]
-pub struct Jade {
+pub struct App {
     pub config: Config,
     #[serde(skip)]
     pub song_current_selection: ListState,
@@ -28,15 +29,15 @@ pub struct Jade {
     #[serde(skip)]
     pub focus_area: FocusArea,
     #[serde(skip)]
-    pub queue: Vec<String>,
+    pub queue: Vec<Song>,
     #[serde(skip)]
-    pub songs: Songs,
+    pub songs: Vec<Song>,
     #[serde(skip)]
     pub channels: Channels,
     #[serde(skip)]
     pub current: Current,
 }
-impl Jade {
+impl App {
     pub fn change_focus_area(&mut self) {
         match self.focus_area {
             FocusArea::Music => self.focus_area = FocusArea::Queue,
@@ -53,17 +54,15 @@ pub struct Config {
 }
 
 #[derive(Default)]
-pub struct Songs {
-    pub titles: Vec<String>,
-    pub lengths: Vec<u32>,
-    pub visual_lengths: Vec<String>,
+pub struct Current {
+    pub song: Song,
+    pub position: u32,
 }
 
-#[derive(Default)]
-pub struct Current {
-    pub title: String,
-    pub length: u32,
-    pub position: u32,
+#[derive(Default, Clone)]
+pub struct Song {
+    pub metadata: Metadata,
+    pub file_name: String,
 }
 
 pub struct Channels {

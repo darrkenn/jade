@@ -14,10 +14,12 @@ unicode-width = "0.2.0"
 symphonia = { version = "0.5.4", features = ["mp3", "flac", "vorbis"] }
 crossbeam-channel = "0.5.15"
 id3 = "1.16.3"
+edar = "0.1.2"
 
 [profile.dev]
 opt-level = 1
 incremental = true
+
 
 [profile.release]
 lto = false

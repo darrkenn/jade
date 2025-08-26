@@ -1,12 +1,12 @@
-use crate::jade::FocusArea::{Music as Music_Area, Queue as Queue_Area};
+use crate::app::FocusArea::{Music as Music_Area, Queue as Queue_Area};
 use crate::threads::musicplayer::MusicPlayer::{NewSong, Pause, Stop, Volume};
 use crate::threads::queue::Queue::*;
-use crate::{Jade, VOLUMELEVELS};
+use crate::{App, VOLUMELEVELS};
 use crossterm::event;
 use crossterm::event::{KeyEvent, KeyEventKind};
 use std::fs;
 
-pub fn handle_key(key: KeyEvent, jade: &mut Jade) -> bool {
+pub fn handle_key(key: KeyEvent, app: &mut App) -> bool {
     //Key filter
     if key.kind != KeyEventKind::Press {
         return false;
@@ -15,105 +15,84 @@ pub fn handle_key(key: KeyEvent, jade: &mut Jade) -> bool {
     //Global keys
     match key.code {
         event::KeyCode::Tab => {
-            jade.change_focus_area();
+            app.change_focus_area();
         }
         event::KeyCode::Esc => {
-            let toml_data = toml::to_string(&jade).unwrap();
-            fs::write(jade.config.location.clone(), toml_data).expect("Cant write to file");
+            let toml_data = toml::to_string(&app).unwrap();
+            fs::write(app.config.location.clone(), toml_data).expect("Cant write to file");
             return true;
         }
         //Audio controls
         event::KeyCode::Char('<') => {
-            if jade.sound_increment > 0 {
-                jade.sound_increment -= 1;
-                jade.config.volume = VOLUMELEVELS[jade.sound_increment as usize];
-                jade.channels
+            if app.sound_increment > 0 {
+                app.sound_increment -= 1;
+                app.config.volume = VOLUMELEVELS[app.sound_increment as usize];
+                app.channels
                     .s_mp
-                    .send(Volume(jade.config.volume))
+                    .send(Volume(app.config.volume))
                     .expect("Couldnt decrease volume")
             }
         }
         event::KeyCode::Char('>') => {
-            if jade.sound_increment < 10 {
-                jade.sound_increment += 1;
-                jade.config.volume = VOLUMELEVELS[jade.sound_increment as usize];
-                jade.channels
+            if app.sound_increment < 10 {
+                app.sound_increment += 1;
+                app.config.volume = VOLUMELEVELS[app.sound_increment as usize];
+                app.channels
                     .s_mp
-                    .send(Volume(jade.config.volume))
+                    .send(Volume(app.config.volume))
                     .expect("Couldnt increase volume")
             }
         }
         _ => {}
     }
-    if jade.focus_area == Music_Area {
+    if app.focus_area == Music_Area {
         match key.code {
-            event::KeyCode::Up => jade.song_current_selection.select_previous(),
-            event::KeyCode::Down => jade.song_current_selection.select_next(),
+            event::KeyCode::Up => app.song_current_selection.select_previous(),
+            event::KeyCode::Down => app.song_current_selection.select_next(),
             //Music player commands
             event::KeyCode::Enter => {
                 //Essential formatting for correct reading of song.
-                if let Some(i) = jade.song_current_selection.selected() {
-                    let (song, length) = current_song(
-                        jade.config.music_location.to_str().unwrap().to_string(),
-                        &jade.songs.titles,
-                        &jade.songs.lengths,
-                        i,
-                    );
-                    jade.channels
-                        .s_mp
-                        .send(NewSong(song, length))
-                        .expect("UhOh");
+                if let Some(i) = app.song_current_selection.selected() {
+                    let song = &app.songs[i];
+                    app.channels.s_mp.send(NewSong(song.clone())).expect("UhOh");
                 }
             }
             event::KeyCode::Char('q') => {
-                if let Some(i) = jade.song_current_selection.selected() {
-                    let (song, length) = current_song(
-                        jade.config.music_location.to_str().unwrap().to_string(),
-                        &jade.songs.titles,
-                        &jade.songs.lengths,
-                        i,
-                    );
-                    jade.queue.push((song).parse().unwrap());
-                    jade.channels
+                if let Some(i) = app.song_current_selection.selected() {
+                    let song = &app.songs[i];
+                    app.queue.push(song.clone());
+                    app.channels
                         .s_q
-                        .send(Add(song, length))
+                        .send(Add(song.clone()))
                         .expect("Cant send to queue");
                 }
             }
             event::KeyCode::Char(' ') => {
-                jade.channels.s_mp.send(Pause).expect("Couldnt pause song");
+                app.channels.s_mp.send(Pause).expect("Couldnt pause song");
             }
             event::KeyCode::Backspace => {
-                jade.channels.s_mp.send(Stop).expect("Couldnt stop song");
+                app.channels.s_mp.send(Stop).expect("Couldnt stop song");
             }
             _ => {}
         }
-    } else if jade.focus_area == Queue_Area {
+    } else if app.focus_area == Queue_Area {
         match key.code {
-            event::KeyCode::Up => jade.queue_current_selection.select_previous(),
-            event::KeyCode::Down => jade.queue_current_selection.select_next(),
+            event::KeyCode::Up => app.queue_current_selection.select_previous(),
+            event::KeyCode::Down => app.queue_current_selection.select_next(),
             event::KeyCode::Char('d') => {
-                let selection = jade.queue_current_selection.selected();
+                let selection = app.queue_current_selection.selected();
                 if let Some(current_selection) = selection {
-                    jade.queue.remove(current_selection);
-                    jade.channels
+                    app.queue.remove(current_selection);
+                    app.channels
                         .s_q
                         .send(Remove(current_selection))
                         .expect("Cant remove from queue");
                 }
             }
-            event::KeyCode::Backspace => jade.channels.s_q.send(Clear).expect("Cant clear queue"),
+            event::KeyCode::Backspace => app.channels.s_q.send(Clear).expect("Cant clear queue"),
 
             _ => {}
         }
     }
     false
-}
-
-fn current_song(location: String, songs: &[String], lengths: &[u32], i: usize) -> (String, u32) {
-    if location.ends_with("/") {
-        (format!("{location}{}", songs[i]), lengths[i])
-    } else {
-        (format!("{location}/{}", songs[i]), lengths[i])
-    }
 }

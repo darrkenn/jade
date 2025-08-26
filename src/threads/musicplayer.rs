@@ -2,16 +2,18 @@ use crossbeam_channel::{Receiver, Sender, bounded, unbounded};
 use rodio::{Decoder, Sink};
 use std::fs::File;
 use std::io::BufReader;
+use std::path::PathBuf;
 use std::time::Duration;
 use std::{panic, thread};
 
 use crate::Info;
+use crate::app::Song;
 
 pub enum MusicPlayer {
     Pause,
     Stop,
     Volume(f32),
-    NewSong(String, u32),
+    NewSong(Song),
 }
 
 pub struct Request;
@@ -19,6 +21,7 @@ pub struct Request;
 pub fn create_mp(
     volume: f32,
     s_info: Sender<Info>,
+    music_location: PathBuf,
 ) -> (
     Sender<MusicPlayer>,
     Receiver<MusicPlayer>,
@@ -75,12 +78,13 @@ pub fn create_mp(
                             sink.set_volume(volume);
                         }
                     }
-                    MusicPlayer::NewSong(song, length) => {
+                    MusicPlayer::NewSong(song) => {
                         sink.clear();
                         s_info
-                            .send(Info::Song(song.clone(), length))
+                            .send(Info::Song(song.clone()))
                             .expect("Couldnt send message to info thread");
-                        let song = create_song(song);
+                        let song =
+                            create_song(format!("{}{}", music_location.display(), song.file_name));
                         sink.append(song);
                         sink.play();
                     }
