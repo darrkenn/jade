@@ -1,0 +1,119 @@
+use crate::App;
+use edar::FormatDuration;
+use ratatui::Frame;
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::prelude::Widget;
+use ratatui::style::{Color, Style};
+use ratatui::widgets::{Block, BorderType, Gauge, Paragraph};
+
+pub fn render_player_area(app: &mut App, area: Rect, frame: &mut Frame) {
+    Block::bordered()
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(Color::White))
+        .render(area, frame.buffer_mut());
+
+    let chunks = Layout::new(
+        Direction::Horizontal,
+        [Constraint::Percentage(56), Constraint::Percentage(44)],
+    )
+    .margin(1)
+    .split(area);
+
+    let left_area = Layout::default()
+        .margin(1)
+        .constraints([Constraint::Min(0)])
+        .split(chunks[0])[0];
+    let right_area = Layout::default()
+        .margin(1)
+        .constraints([Constraint::Min(0)])
+        .split(chunks[1])[0];
+
+    let left_area_chunks = Layout::new(
+        Direction::Vertical,
+        [
+            Constraint::Length(2),
+            Constraint::Length(4),
+            Constraint::Length(4),
+        ],
+    )
+    .split(left_area);
+
+    song_info(
+        app.current
+            .song
+            .song
+            .metadata
+            .title
+            .clone()
+            .unwrap_or_else(|| {
+                let mut split: Vec<&str> = app.current.song.song.file_name.split(".").collect();
+                if !split.is_empty() {
+                    split.pop();
+                }
+                split.join(".").to_string()
+            }),
+        app.current.song.song.metadata.duration.format(),
+        left_area_chunks[0],
+        frame,
+    );
+
+    progress_bar(
+        app.current.song.position,
+        app.current
+            .song
+            .song
+            .metadata
+            .duration
+            .map(|d| d.as_secs() as u32)
+            .unwrap_or_else(|| 0),
+        left_area_chunks[1],
+        frame,
+    );
+}
+
+fn progress_bar(position: u32, length: u32, area: Rect, frame: &mut Frame) {
+    let ratio = if length == 0 {
+        0.0
+    } else {
+        (position as f64 / length as f64).clamp(0.0, 1.0)
+    };
+
+    let border = Block::bordered()
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(Color::White));
+
+    frame.render_widget(border, area);
+
+    let inner_area = Layout::default()
+        .margin(1)
+        .constraints([Constraint::Min(0)])
+        .split(area)[0];
+
+    let gauge = Gauge::default()
+        .block(
+            Block::default()
+                .border_type(BorderType::Rounded)
+                .border_style(Style::default().bg(Color::Black).fg(Color::White)),
+        )
+        .gauge_style(Style::default().bg(Color::Gray).fg(Color::Cyan))
+        .label("")
+        .ratio(ratio);
+    frame.render_widget(gauge, inner_area);
+}
+
+fn song_info(title: String, length: String, area: Rect, frame: &mut Frame) {
+    let area_chunks = Layout::new(
+        Direction::Vertical,
+        [Constraint::Length(1), Constraint::Length(1)],
+    )
+    .split(area);
+
+    let title =
+        Paragraph::new(format!("Title: {}", title)).style(Style::default().bold().fg(Color::White));
+
+    let length = Paragraph::new(format!("Length: {}", length))
+        .style(Style::default().bold().fg(Color::White));
+
+    frame.render_widget(title, area_chunks[0]);
+    frame.render_widget(length, area_chunks[1]);
+}

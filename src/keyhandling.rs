@@ -1,4 +1,5 @@
-use crate::app::FocusArea::{Music as Music_Area, Queue as Queue_Area};
+use crate::app::FocusArea::{Info as Info_Area, Music as Music_Area, Queue as Queue_Area};
+use crate::app::Song;
 use crate::threads::musicplayer::MusicPlayer::{NewSong, Pause, Stop, Volume};
 use crate::threads::queue::Queue::*;
 use crate::{App, VOLUMELEVELS};
@@ -47,18 +48,18 @@ pub fn handle_key(key: KeyEvent, app: &mut App) -> bool {
     }
     if app.focus_area == Music_Area {
         match key.code {
-            event::KeyCode::Up => app.song_current_selection.select_previous(),
-            event::KeyCode::Down => app.song_current_selection.select_next(),
+            event::KeyCode::Up => app.current.selection.song.select_previous(),
+            event::KeyCode::Down => app.current.selection.song.select_next(),
             //Music player commands
             event::KeyCode::Enter => {
                 //Essential formatting for correct reading of song.
-                if let Some(i) = app.song_current_selection.selected() {
+                if let Some(i) = app.current.selection.song.selected() {
                     let song = &app.songs[i];
                     app.channels.s_mp.send(NewSong(song.clone())).expect("UhOh");
                 }
             }
             event::KeyCode::Char('q') => {
-                if let Some(i) = app.song_current_selection.selected() {
+                if let Some(i) = app.current.selection.song.selected() {
                     let song = &app.songs[i];
                     app.queue.push(song.clone());
                     app.channels
@@ -73,14 +74,21 @@ pub fn handle_key(key: KeyEvent, app: &mut App) -> bool {
             event::KeyCode::Backspace => {
                 app.channels.s_mp.send(Stop).expect("Couldnt stop song");
             }
+            event::KeyCode::Char('i') => {
+                if let Some(i) = app.current.selection.song.selected() {
+                    let song = &app.songs[i];
+                    app.song_info = song.clone();
+                    app.change_focus_info();
+                }
+            }
             _ => {}
         }
     } else if app.focus_area == Queue_Area {
         match key.code {
-            event::KeyCode::Up => app.queue_current_selection.select_previous(),
-            event::KeyCode::Down => app.queue_current_selection.select_next(),
+            event::KeyCode::Up => app.current.selection.queue.select_previous(),
+            event::KeyCode::Down => app.current.selection.queue.select_next(),
             event::KeyCode::Char('d') => {
-                let selection = app.queue_current_selection.selected();
+                let selection = app.current.selection.queue.selected();
                 if let Some(current_selection) = selection {
                     app.queue.remove(current_selection);
                     app.channels
@@ -90,8 +98,20 @@ pub fn handle_key(key: KeyEvent, app: &mut App) -> bool {
                 }
             }
             event::KeyCode::Backspace => app.channels.s_q.send(Clear).expect("Cant clear queue"),
+            event::KeyCode::Char('i') => {
+                if let Some(i) = app.current.selection.song.selected() {
+                    let song = &app.songs[i];
+                    app.song_info = song.clone();
+                    app.change_focus_info();
+                }
+            }
 
             _ => {}
+        }
+    } else if app.focus_area == Info_Area {
+        if key.code == event::KeyCode::Enter {
+            app.song_info = Song::default();
+            app.change_focus_info();
         }
     }
     false

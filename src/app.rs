@@ -16,14 +16,13 @@ pub enum FocusArea {
     #[default]
     Music,
     Queue,
+    Info,
 }
 #[derive(Deserialize, Serialize)]
 pub struct App {
     pub config: Config,
     #[serde(skip)]
-    pub song_current_selection: ListState,
-    #[serde(skip)]
-    pub queue_current_selection: ListState,
+    pub current: Current,
     #[serde(skip)]
     pub sound_increment: u8,
     #[serde(skip)]
@@ -35,13 +34,20 @@ pub struct App {
     #[serde(skip)]
     pub channels: Channels,
     #[serde(skip)]
-    pub current: Current,
+    pub song_info: Song,
 }
 impl App {
     pub fn change_focus_area(&mut self) {
         match self.focus_area {
             FocusArea::Music => self.focus_area = FocusArea::Queue,
             FocusArea::Queue => self.focus_area = FocusArea::Music,
+            FocusArea::Info => self.focus_area = FocusArea::Info,
+        }
+    }
+    pub fn change_focus_info(&mut self) {
+        match self.focus_area {
+            FocusArea::Info => self.focus_area = FocusArea::Music,
+            _ => self.focus_area = FocusArea::Info,
         }
     }
 }
@@ -55,6 +61,18 @@ pub struct Config {
 
 #[derive(Default)]
 pub struct Current {
+    pub selection: CurrentSelection,
+    pub song: CurrentSong,
+}
+
+#[derive(Default)]
+pub struct CurrentSelection {
+    pub song: ListState,
+    pub queue: ListState,
+}
+
+#[derive(Default)]
+pub struct CurrentSong {
     pub song: Song,
     pub position: u32,
 }

@@ -2,7 +2,6 @@ mod app;
 mod keyhandling;
 mod render;
 mod run;
-mod song_information;
 mod threads;
 
 use crate::app::FocusArea::Music as Music_Area;
@@ -66,8 +65,8 @@ fn setup_app(app: &mut App, config: PathBuf) -> &mut App {
 
     app.songs = get_songs_in_folder(app.config.music_location.clone());
     app.focus_area = Music_Area;
-    app.song_current_selection.select_first();
-    app.queue_current_selection.select_first();
+    app.current.selection.song.select_first();
+    app.current.selection.queue.select_first();
 
     let r_req: Receiver<Request>;
     let s_info: Sender<Info>;
