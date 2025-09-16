@@ -2,7 +2,9 @@ use std::path::PathBuf;
 
 use crossbeam_channel::{Receiver, Sender, bounded, unbounded};
 use edar::Metadata;
-use ratatui::widgets::ListState;
+use image::load_from_memory;
+use ratatui::{layout::Rect, widgets::ListState};
+use ratatui_image::{Resize, picker::Picker, protocol::Protocol};
 use serde::{Deserialize, Serialize};
 
 use crate::threads::{
@@ -35,6 +37,8 @@ pub struct App {
     pub channels: Channels,
     #[serde(skip)]
     pub song_info: Song,
+    #[serde(skip)]
+    pub image: Option<Protocol>,
 }
 impl App {
     pub fn change_focus_area(&mut self) {
@@ -49,6 +53,16 @@ impl App {
             FocusArea::Info => self.focus_area = FocusArea::Music,
             _ => self.focus_area = FocusArea::Info,
         }
+    }
+    pub fn create_image(&mut self, data: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
+        let picker = Picker::from_query_stdio()?;
+
+        let dyn_img = load_from_memory(data)?;
+        let image = picker
+            .new_protocol(dyn_img, Rect::new(24, 25, 100, 100), Resize::Fit(None))
+            .ok();
+        self.image = image;
+        Ok(())
     }
 }
 #[derive(Deserialize, Serialize)]

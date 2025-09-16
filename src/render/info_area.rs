@@ -1,19 +1,19 @@
+use crate::app::App;
 use edar::FormatDuration;
 use ratatui::{
     Frame,
-    layout::{Constraint, Direction, Layout, Margin, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
-    text::{Line, Span},
-    widgets::{Block, BorderType, Borders, ListItem, Paragraph},
+    text::Line,
+    widgets::{Block, BorderType, Borders, Paragraph},
 };
+use ratatui_image::{Image, StatefulImage};
 
-use crate::app::App;
-
-pub fn render_info_area(app: &App, area: Rect, frame: &mut Frame) {
+pub fn render_info_area(app: &mut App, area: Rect, frame: &mut Frame) {
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .style(Style::default().fg(Color::White).bg(Color::Black));
+        .style(Style::default().fg(Color::Cyan).bg(Color::Black));
 
     let [inner_area] = Layout::new(Direction::Horizontal, [Constraint::Fill(1)])
         .margin(1)
@@ -29,10 +29,10 @@ pub fn render_info_area(app: &App, area: Rect, frame: &mut Frame) {
         ("Duration", metadata.duration.format()),
     ]
     .iter()
-    .map(|(label, value)| Line::from(format!("{label}: {value}")))
+    .map(|(label, value)| Line::from(format!("{:<10} {value}", label)))
     .collect();
 
-    let info = Paragraph::new(lines);
+    let info = Paragraph::new(lines).style(Style::default().fg(Color::White));
 
     frame.render_widget(block, area);
     frame.render_widget(info, inner_area);
