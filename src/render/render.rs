@@ -1,12 +1,13 @@
 use crate::App;
 use crate::app::FocusArea;
-use crate::render::info_area::render_info_area;
-use crate::render::music_area::render_music_area;
-use crate::render::player_area::render_player_area;
-use crate::render::queue_area::render_queue_area;
+use crate::render::info::render_info_area;
+use crate::render::music::render_music_area;
+use crate::render::player::render_player_area;
+use crate::render::queue::render_queue_area;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::prelude::Direction;
+use ratatui::widgets::Clear;
 
 pub fn render(frame: &mut Frame, app: &mut App) {
     let area = frame.area();
@@ -23,13 +24,14 @@ pub fn render(frame: &mut Frame, app: &mut App) {
     )
     .split(vertical_chunks[0]);
 
+    render_music_area(app, top_chunks[0], frame);
+    render_queue_area(app, top_chunks[1], frame);
+    render_player_area(app, vertical_chunks[1], frame);
+
     if app.focus_area == FocusArea::Info {
-        let popup_area = popup_area(area, 25, 50);
-        render_info_area(app, popup_area, frame);
-    } else {
-        render_music_area(app, top_chunks[0], frame);
-        render_queue_area(app, top_chunks[1], frame);
-        render_player_area(app, vertical_chunks[1], frame);
+        let popup_area = popup_area(area, 25, 20);
+        frame.render_widget(Clear, popup_area);
+        render_info_area(app.song_info.metadata.clone(), popup_area, frame);
     }
 }
 

@@ -1,5 +1,4 @@
-use crate::app::App;
-use edar::FormatDuration;
+use edar::{FormatDuration, Metadata};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -9,7 +8,7 @@ use ratatui::{
 };
 use ratatui_image::{Image, StatefulImage};
 
-pub fn render_info_area(app: &mut App, area: Rect, frame: &mut Frame) {
+pub fn render_info_area(metadata: Metadata, area: Rect, frame: &mut Frame) {
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
@@ -18,8 +17,6 @@ pub fn render_info_area(app: &mut App, area: Rect, frame: &mut Frame) {
     let [inner_area] = Layout::new(Direction::Horizontal, [Constraint::Fill(1)])
         .margin(1)
         .areas(area);
-
-    let metadata = app.song_info.metadata.clone();
 
     let lines: Vec<Line> = [
         ("Title", metadata.title.unwrap_or("".to_string())),
