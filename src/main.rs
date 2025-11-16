@@ -2,7 +2,6 @@ mod app;
 mod keyhandling;
 mod render;
 mod run;
-mod song_information;
 mod threads;
 
 use crate::app::FocusArea::Music as Music_Area;
@@ -13,7 +12,7 @@ use crate::threads::musicplayer::{MusicPlayer, Request, create_mp};
 use crate::threads::queue::create_queue;
 use color_eyre::eyre::Result;
 use crossbeam_channel::{Receiver, Sender};
-use edar::{Extractor, Metadata};
+use edar::{Metadata, extract_metadata};
 use std::env::home_dir;
 use std::path::PathBuf;
 use std::{fs, process};
@@ -66,8 +65,8 @@ fn setup_app(app: &mut App, config: PathBuf) -> &mut App {
 
     app.songs = get_songs_in_folder(app.config.music_location.clone());
     app.focus_area = Music_Area;
-    app.song_current_selection.select_first();
-    app.queue_current_selection.select_first();
+    app.current.selection.song.select_first();
+    app.current.selection.queue.select_first();
 
     let r_req: Receiver<Request>;
     let s_info: Sender<Info>;
@@ -88,9 +87,9 @@ fn get_songs_in_folder(music_folder: PathBuf) -> Vec<Song> {
         for entry in entries.flatten() {
             if let Some(extension) = entry.path().extension().and_then(|e| e.to_str()) {
                 if SUPPORTED_FORMATS.contains(&extension) {
-                    if let Ok(metadata) = Extractor::extract_metadata(
-                        entry.path().to_str().expect("Cant convert path to str"),
-                    ) {
+                    if let Ok(metadata) =
+                        extract_metadata(entry.path().to_str().expect("Cant convert path to str"))
+                    {
                         let song = Song {
                             metadata: metadata,
                             file_name: entry.file_name().to_str().unwrap().to_string(),

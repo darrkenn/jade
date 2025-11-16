@@ -2,7 +2,9 @@ use std::path::PathBuf;
 
 use crossbeam_channel::{Receiver, Sender, bounded, unbounded};
 use edar::Metadata;
-use ratatui::widgets::ListState;
+use image::load_from_memory;
+use ratatui::{layout::Rect, widgets::ListState};
+use ratatui_image::{Resize, picker::Picker, protocol::Protocol};
 use serde::{Deserialize, Serialize};
 
 use crate::threads::{
@@ -16,14 +18,13 @@ pub enum FocusArea {
     #[default]
     Music,
     Queue,
+    Info,
 }
 #[derive(Deserialize, Serialize)]
 pub struct App {
     pub config: Config,
     #[serde(skip)]
-    pub song_current_selection: ListState,
-    #[serde(skip)]
-    pub queue_current_selection: ListState,
+    pub current: Current,
     #[serde(skip)]
     pub sound_increment: u8,
     #[serde(skip)]
@@ -35,14 +36,33 @@ pub struct App {
     #[serde(skip)]
     pub channels: Channels,
     #[serde(skip)]
-    pub current: Current,
+    pub song_info: Song,
+    #[serde(skip)]
+    pub image: Option<Protocol>,
 }
 impl App {
     pub fn change_focus_area(&mut self) {
         match self.focus_area {
             FocusArea::Music => self.focus_area = FocusArea::Queue,
             FocusArea::Queue => self.focus_area = FocusArea::Music,
+            FocusArea::Info => self.focus_area = FocusArea::Info,
         }
+    }
+    pub fn change_focus_info(&mut self) {
+        match self.focus_area {
+            FocusArea::Info => self.focus_area = FocusArea::Music,
+            _ => self.focus_area = FocusArea::Info,
+        }
+    }
+    pub fn create_image(&mut self, data: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
+        let picker = Picker::from_query_stdio()?;
+
+        let dyn_img = load_from_memory(data)?;
+        let image = picker
+            .new_protocol(dyn_img, Rect::new(24, 25, 100, 100), Resize::Fit(None))
+            .ok();
+        self.image = image;
+        Ok(())
     }
 }
 #[derive(Deserialize, Serialize)]
@@ -55,6 +75,18 @@ pub struct Config {
 
 #[derive(Default)]
 pub struct Current {
+    pub selection: CurrentSelection,
+    pub song: CurrentSong,
+}
+
+#[derive(Default)]
+pub struct CurrentSelection {
+    pub song: ListState,
+    pub queue: ListState,
+}
+
+#[derive(Default)]
+pub struct CurrentSong {
     pub song: Song,
     pub position: u32,
 }

@@ -43,5 +43,5 @@ fn render_queue_list(app: &mut App, area: Rect, frame: &mut Frame) {
         .collect();
 
     let list = generate_list(&values, area);
-    frame.render_stateful_widget(list, area, &mut app.queue_current_selection)
+    frame.render_stateful_widget(list, area, &mut app.current.selection.queue)
 }

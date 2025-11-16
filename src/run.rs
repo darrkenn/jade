@@ -22,16 +22,16 @@ pub fn run(mut terminal: DefaultTerminal, app: &mut App) -> color_eyre::Result<(
         if let Some(message) = received_ui {
             match message {
                 Info::Song(song) => {
-                    app.current.song = song;
+                    app.current.song.song = song;
                 }
                 Info::Position(x) => {
-                    if app.current.position != x {
-                        app.current.position = x;
+                    if app.current.song.position != x {
+                        app.current.song.position = x;
                     }
                 }
                 Info::Clear => {
-                    app.current.song = Song::default();
-                    app.current.position = 0;
+                    app.current.song.song = Song::default();
+                    app.current.song.position = 0;
                 }
             }
         }

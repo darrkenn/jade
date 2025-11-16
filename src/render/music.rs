@@ -55,7 +55,7 @@ pub fn render_song_list(app: &mut App, area: Rect, frame: &mut Frame) {
 
     let list = generate_list(&values, area);
 
-    frame.render_stateful_widget(list, area, &mut app.song_current_selection);
+    frame.render_stateful_widget(list, area, &mut app.current.selection.song);
 }
 pub fn render_time_list(app: &mut App, area: Rect, frame: &mut Frame) {
     let values: Vec<ListItem> = app

@@ -6,7 +6,7 @@ use ratatui::prelude::Widget;
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, BorderType, Gauge, Paragraph};
 
-pub fn render_info_area(app: &mut App, area: Rect, frame: &mut Frame) {
+pub fn render_player_area(app: &mut App, area: Rect, frame: &mut Frame) {
     Block::bordered()
         .border_type(BorderType::Rounded)
         .border_style(Style::default().fg(Color::White))
@@ -39,21 +39,28 @@ pub fn render_info_area(app: &mut App, area: Rect, frame: &mut Frame) {
     .split(left_area);
 
     song_info(
-        app.current.song.metadata.title.clone().unwrap_or_else(|| {
-            let mut split: Vec<&str> = app.current.song.file_name.split(".").collect();
-            if !split.is_empty() {
-                split.pop();
-            }
-            split.join(".").to_string()
-        }),
-        app.current.song.metadata.duration.format(),
+        app.current
+            .song
+            .song
+            .metadata
+            .title
+            .clone()
+            .unwrap_or_else(|| {
+                let mut split: Vec<&str> = app.current.song.song.file_name.split(".").collect();
+                if !split.is_empty() {
+                    split.pop();
+                }
+                split.join(".").to_string()
+            }),
+        app.current.song.song.metadata.duration.format(),
         left_area_chunks[0],
         frame,
     );
 
     progress_bar(
-        app.current.position,
+        app.current.song.position,
         app.current
+            .song
             .song
             .metadata
             .duration
@@ -109,18 +116,4 @@ fn song_info(title: String, length: String, area: Rect, frame: &mut Frame) {
 
     frame.render_widget(title, area_chunks[0]);
     frame.render_widget(length, area_chunks[1]);
-}
-
-fn visual_length(length: u32) -> String {
-    if length == 0 {
-        "".to_string()
-    } else {
-        let mins = length / 60;
-        let secs = length % 60;
-        if secs < 10 {
-            format!("{mins}:0{secs}")
-        } else {
-            format!("{mins}:{secs}")
-        }
-    }
 }
