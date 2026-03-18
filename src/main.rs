@@ -1,6 +1,5 @@
 mod app;
 mod config;
-mod keyhandling;
 mod render;
 
 use std::env::home_dir;
