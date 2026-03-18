@@ -116,7 +116,7 @@ impl Config {
         if self.volume_level.is_none_or(|vl| vl > 100) {
             1.0
         } else {
-            (self.volume_level.unwrap() / 100) as f32
+            (self.volume_level.unwrap() as f32) / 100_f32
         }
     }
 
