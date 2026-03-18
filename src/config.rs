@@ -113,14 +113,19 @@ impl Config {
     }
 
     pub fn volume_level(&self) -> f32 {
-        if self.volume_level.is_none_or(|vl| vl > 10 || vl < 0) {
+        if self.volume_level.is_none_or(|vl| vl > 100) {
             1.0
         } else {
-            VOLUME_LEVELS[self.volume_level.unwrap()]
+            (self.volume_level.unwrap() / 100) as f32
         }
     }
 
     pub fn set_volume_level(&mut self, current_volume_level: f32) {
-        self.volume_level = Some(current_volume_level.round() as usize)
+        let volume_level = (current_volume_level * 100_f32).round() as usize;
+        self.volume_level = if volume_level <= 100 {
+            Some(volume_level)
+        } else {
+            Some(100)
+        }
     }
 }
