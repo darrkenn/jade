@@ -9,6 +9,7 @@ ratatui = { version = "0.30.0", default-features = true, features = ["serde"]}
 color-eyre = "0.6.5"
 serde = { version = "1.0.228", features = ["derive"] }
 toml = "1.0.7"
+edar = "1.1.1"
 
 [profile.dev]
 opt-level = 0

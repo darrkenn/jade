@@ -1,3 +1,4 @@
+pub mod music;
 pub mod state;
 use crossterm::event::Event;
 use ratatui::DefaultTerminal;

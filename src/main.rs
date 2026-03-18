@@ -3,7 +3,7 @@ mod config;
 mod keyhandling;
 mod render;
 
-use std::env::home_dir;
+use std::{env::home_dir, path::PathBuf};
 
 use crate::{
     app::{app, state::AppState},
@@ -20,12 +20,35 @@ fn main() -> color_eyre::Result<()> {
         panic!("Can't get home-dir from env");
     };
 
-    let config = match Config::from_file(&config_location) {
+    let mut config = match Config::from_file(&config_location) {
         Ok(c) => c,
         Err(_) => Config::default(),
     };
 
+    let invalid_music_location = |s: &str| s.is_empty() || !PathBuf::from(s).exists();
+
+    if config
+        .music_location()
+        .is_none_or(|ml| invalid_music_location(ml.as_str()))
+    {
+        loop {
+            let mut music_location: String = String::new();
+            println!("Music location invalid or empty\nEnter music location:",);
+            std::io::stdin().read_line(&mut music_location)?;
+
+            if !invalid_music_location(music_location.as_str().trim()) {
+                config.set_music_location(music_location.trim().to_string());
+                break;
+            }
+        }
+    }
+
     let mut app_state = AppState::new(config);
+    app_state.set_root_node();
+
+    app_state.entries.as_mut().unwrap().set_children();
+
+    println!("{:#?}", app_state.entries);
 
     color_eyre::install()?;
     ratatui::run(|t| app(t, &mut app_state))?;
