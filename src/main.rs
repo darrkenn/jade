@@ -1,12 +1,15 @@
-use std::{env::home_dir, fs};
-
-use crate::{app::app, config::Config};
-
 mod app;
 mod config;
+mod keyhandling;
 mod render;
 
-pub const VOLUME_LEVELS: [f32; 11] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
+use std::env::home_dir;
+
+use crate::{
+    app::{app, state::AppState},
+    config::Config,
+};
+
 pub const SUPPORTED_FORMATS: [&str; 4] = ["wav", "mp3", "ogg", "flac"];
 
 fn main() -> color_eyre::Result<()> {
@@ -21,11 +24,14 @@ fn main() -> color_eyre::Result<()> {
         Ok(c) => c,
         Err(_) => Config::default(),
     };
-    println!("{:#?}", config);
-    color_eyre::install()?;
-    ratatui::run(app)?;
 
-    config
+    let mut app_state = AppState::new(config);
+
+    color_eyre::install()?;
+    ratatui::run(|t| app(t, &mut app_state))?;
+
+    app_state
+        .config
         .save_to_file(config_location)
         .expect("Can't save config file");
     Ok(())

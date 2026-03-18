@@ -1,9 +1,7 @@
-use std::{env::home_dir, fs, path::PathBuf};
+use std::{fs, path::PathBuf};
 
 use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
-
-use crate::VOLUME_LEVELS;
 
 pub struct Theme {
     text: Color,
