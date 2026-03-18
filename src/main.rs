@@ -46,9 +46,7 @@ fn main() -> color_eyre::Result<()> {
     let mut app_state = AppState::new(config);
     app_state.set_root_node();
 
-    app_state.entries.as_mut().unwrap().set_children();
-
-    println!("{:#?}", app_state.entries);
+    let _ = app_state.entries.as_mut().unwrap().explore(None);
 
     color_eyre::install()?;
     ratatui::run(|t| app(t, &mut app_state))?;

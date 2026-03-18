@@ -26,13 +26,14 @@ impl Node {
             children: None,
         }
     }
-    pub fn set_children(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    fn set_children(&mut self, dir_name: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
         let children = if self.node_type == NodeType::File {
             None
         } else {
             let mut children: HashMap<String, Node> = HashMap::new();
 
-            for entry in fs::read_dir(&self.name)?.flatten() {
+            for entry in fs::read_dir(dir_name)? {
+                let entry = entry?;
                 let node_type = if entry.path().is_dir() {
                     NodeType::Folder
                 } else {
@@ -66,7 +67,32 @@ impl Node {
                 Some(children)
             }
         };
+
         self.children = children;
+        Ok(())
+    }
+
+    pub fn explore(
+        &mut self,
+        parent_location: Option<&str>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        if self.node_type == NodeType::Folder {
+            let dir_name = if let Some(pl) = parent_location {
+                let mut p = PathBuf::from(pl);
+                p.push(&self.name);
+                p
+            } else {
+                PathBuf::from(&self.name)
+            };
+
+            self.set_children(dir_name.clone())?;
+
+            if let Some(children) = &mut self.children {
+                for (_, node) in children {
+                    node.explore(Some(dir_name.to_str().unwrap()))?;
+                }
+            }
+        }
         Ok(())
     }
 }

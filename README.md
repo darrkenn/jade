@@ -1,3 +1,4 @@
 # Jade
+A terminal music player.
 
-A terminal music player written in Rust
+Larger music folders will have longer startup
