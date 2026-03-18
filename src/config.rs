@@ -1,10 +1,11 @@
 use std::{fs, path::PathBuf};
 
-use ratatui::style::Color;
+use ratatui::style::{Color, Style};
 use serde::{Deserialize, Serialize};
 
 pub struct Theme {
     text: Color,
+    text_highlight: Color,
     border: Color,
     background: Color,
 }
@@ -13,6 +14,7 @@ impl Default for Theme {
     fn default() -> Self {
         Self {
             text: Color::White,
+            text_highlight: Color::Cyan,
             border: Color::White,
             background: Color::Black,
         }
@@ -23,6 +25,7 @@ impl Theme {
     fn blue() -> Self {
         Self {
             text: Color::Blue,
+            text_highlight: Color::Cyan,
             border: Color::Blue,
             background: Color::Black,
         }
@@ -30,9 +33,22 @@ impl Theme {
     fn red() -> Self {
         Self {
             text: Color::Red,
+            text_highlight: Color::Cyan,
             border: Color::Red,
             background: Color::Black,
         }
+    }
+    pub fn text_style(&self) -> Style {
+        Style::new().fg(self.text)
+    }
+    pub fn text_highlight_style(&self) -> Style {
+        Style::new().fg(self.text_highlight)
+    }
+    pub fn border_style(&self) -> Style {
+        Style::new().fg(self.border)
+    }
+    pub fn background_style(&self) -> Style {
+        Style::new().fg(self.background)
     }
 }
 
@@ -86,27 +102,15 @@ impl Config {
         self.music_location = Some(selected_location)
     }
 
-    pub fn theme(&self) -> &Theme {
+    pub fn theme(&self) -> Theme {
         match self
             .selected_theme
             .as_ref()
             .unwrap_or(&SelectedTheme::Default)
         {
-            SelectedTheme::Default => &Theme {
-                text: Color::White,
-                border: Color::White,
-                background: Color::Black,
-            },
-            SelectedTheme::Blue => &Theme {
-                text: Color::Blue,
-                border: Color::Blue,
-                background: Color::Black,
-            },
-            SelectedTheme::Red => &Theme {
-                text: Color::Red,
-                border: Color::Red,
-                background: Color::Black,
-            },
+            SelectedTheme::Default => Theme::default(),
+            SelectedTheme::Blue => Theme::blue(),
+            SelectedTheme::Red => Theme::red(),
         }
     }
 
