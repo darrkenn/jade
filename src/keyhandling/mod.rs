@@ -14,15 +14,15 @@ mod songs;
 pub fn handle_key(key: KeyEvent, app_state: &mut AppState) -> bool {
     match key.code {
         KeyCode::Backspace => return true,
-        KeyCode::Esc => app_state.current_screen = Screen::Settings,
+        KeyCode::Esc => app_state.current.screen = Screen::Settings,
         KeyCode::Char(c) => match c {
-            's' => app_state.current_screen = Screen::Songs,
-            'q' => app_state.current_screen = Screen::Queue,
+            's' => app_state.current.screen = Screen::Songs,
+            'q' => app_state.current.screen = Screen::Queue,
             _ => {}
         },
         _ => {}
     };
-    match app_state.current_screen {
+    match app_state.current.screen {
         Screen::Songs => handle_songs_key(key, app_state),
         Screen::Queue => handle_queue_key(key, app_state),
         Screen::Settings => handle_settings_key(key, app_state),

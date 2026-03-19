@@ -35,25 +35,25 @@ pub fn render(frame: &mut Frame, app_state: &mut AppState) {
     // Player area block
     frame.render_widget(Block::bordered().title("player"), player_area);
 
-    match app_state.current_screen {
+    match app_state.current.screen {
         Screen::Songs => {
             frame.render_widget(
                 screen_block_selection(
-                    &app_state.current_screen,
+                    &app_state.current.screen,
                     screen_block,
                     app_state.config.theme().text_highlight_style(),
                 ),
                 screen_area,
             );
             frame.render_widget(
-                format!("{}", app_state.current_volume_level),
+                format!("{}", app_state.current.index),
                 screen_area.inner(Margin::new(1, 1)),
             );
         }
         Screen::Queue => {
             frame.render_widget(
                 screen_block_selection(
-                    &app_state.current_screen,
+                    &app_state.current.screen,
                     screen_block,
                     app_state.config.theme().text_highlight_style(),
                 ),
@@ -64,7 +64,7 @@ pub fn render(frame: &mut Frame, app_state: &mut AppState) {
         Screen::Settings => {
             frame.render_widget(
                 screen_block_selection(
-                    &app_state.current_screen,
+                    &app_state.current.screen,
                     screen_block,
                     app_state.config.theme().text_highlight_style(),
                 ),
