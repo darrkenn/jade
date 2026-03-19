@@ -1,4 +1,10 @@
-use std::{collections::HashMap, fs, path::PathBuf};
+use std::{
+    cell::RefCell,
+    collections::HashMap,
+    fs,
+    path::PathBuf,
+    rc::{Rc, Weak},
+};
 
 use crate::SUPPORTED_FORMATS;
 
@@ -14,23 +20,34 @@ pub struct Node {
     pub name: String,
     pub extension: Option<String>,
     pub node_type: NodeType,
-    pub children: Option<HashMap<String, Node>>,
+    pub children: Option<HashMap<String, Rc<RefCell<Node>>>>,
+    pub parent: Option<Weak<RefCell<Node>>>,
 }
 
 impl Node {
-    pub fn new(name: String, extension: Option<String>, node_type: NodeType) -> Self {
+    pub fn new(
+        name: String,
+        extension: Option<String>,
+        node_type: NodeType,
+        parent: Option<Weak<RefCell<Node>>>,
+    ) -> Self {
         Self {
             name,
             extension,
             node_type,
             children: None,
+            parent: parent,
         }
     }
-    fn set_children(&mut self, dir_name: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+    fn set_children(
+        &mut self,
+        dir_name: PathBuf,
+        this: &Rc<RefCell<Node>>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let children = if self.node_type == NodeType::File {
             None
         } else {
-            let mut children: HashMap<String, Node> = HashMap::new();
+            let mut children: HashMap<String, Rc<RefCell<Node>>> = HashMap::new();
 
             for entry in fs::read_dir(dir_name)? {
                 let entry = entry?;
@@ -55,10 +72,13 @@ impl Node {
                 if (node_type == NodeType::File && extension != None)
                     || (node_type == NodeType::Folder && extension == None)
                 {
-                    children.insert(
+                    let child = Rc::new(RefCell::new(Node::new(
                         node_name.clone(),
-                        Node::new(node_name, extension, node_type),
-                    );
+                        extension,
+                        node_type,
+                        Some(Rc::downgrade(this)),
+                    )));
+                    children.insert(node_name, child);
                 }
             }
             if children.is_empty() {
@@ -75,6 +95,7 @@ impl Node {
     pub fn explore(
         &mut self,
         parent_location: Option<&str>,
+        this: &Rc<RefCell<Node>>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         if self.node_type == NodeType::Folder {
             let dir_name = if let Some(pl) = parent_location {
@@ -85,11 +106,12 @@ impl Node {
                 PathBuf::from(&self.name)
             };
 
-            self.set_children(dir_name.clone())?;
+            self.set_children(dir_name.clone(), this)?;
 
-            if let Some(children) = &mut self.children {
+            if let Some(children) = &self.children {
                 for (_, node) in children {
-                    node.explore(Some(dir_name.to_str().unwrap()))?;
+                    node.borrow_mut()
+                        .explore(Some(dir_name.to_str().unwrap()), &node)?;
                 }
             }
         }

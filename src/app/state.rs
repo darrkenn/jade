@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{cell::RefCell, path::PathBuf, rc::Rc};
 
 use crate::{
     app::music::tree::{Node, NodeType},
@@ -14,14 +14,15 @@ pub enum Screen {
 pub struct Current {
     pub volume_level: f32,
     pub screen: Screen,
-    pub list: Vec<(String, String)>,
+    pub list: Vec<Node>,
+    pub list_size: usize,
     pub index: usize,
 }
 
 pub struct AppState {
     pub config: Config,
     pub current: Current,
-    pub entries: Node,
+    pub root: Rc<RefCell<Node>>,
 }
 
 impl AppState {
@@ -31,9 +32,15 @@ impl AppState {
                 volume_level: config.volume_level(),
                 screen: Screen::Songs,
                 list: Vec::new(),
+                list_size: 0,
                 index: 0,
             },
-            entries: Node::new(config.music_location().unwrap(), None, NodeType::Folder),
+            root: Rc::new(RefCell::new(Node::new(
+                config.music_location().unwrap(),
+                None,
+                NodeType::Folder,
+                None,
+            ))),
             config,
         }
     }
