@@ -1,4 +1,10 @@
-use std::{cell::RefCell, path::PathBuf, rc::Rc};
+use std::{
+    cell::RefCell,
+    rc::Rc,
+    sync::{Arc, Mutex},
+};
+
+use ratatui::widgets::ListState;
 
 use crate::{
     app::music::tree::{Node, NodeType},
@@ -17,11 +23,13 @@ pub struct Current {
     pub list: Vec<Node>,
     pub list_size: usize,
     pub index: usize,
+    pub node: Option<Rc<RefCell<Node>>>,
 }
 
 pub struct AppState {
     pub config: Config,
     pub current: Current,
+    pub list_state: ListState,
     pub root: Rc<RefCell<Node>>,
 }
 
@@ -34,6 +42,7 @@ impl AppState {
                 list: Vec::new(),
                 list_size: 0,
                 index: 0,
+                node: None,
             },
             root: Rc::new(RefCell::new(Node::new(
                 config.music_location().unwrap(),
@@ -41,6 +50,7 @@ impl AppState {
                 NodeType::Folder,
                 None,
             ))),
+            list_state: ListState::default().with_selected(Some(0)),
             config,
         }
     }

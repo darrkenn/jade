@@ -1,5 +1,7 @@
 mod player;
 mod songs;
+use std::rc::Rc;
+
 use ratatui::{
     Frame,
     layout::{Margin, Rect},
@@ -8,7 +10,10 @@ use ratatui::{
     widgets::Block,
 };
 
-use crate::app::state::{AppState, Screen};
+use crate::{
+    app::state::{AppState, Screen},
+    render::songs::render_songs,
+};
 
 pub fn render(frame: &mut Frame, app_state: &mut AppState) {
     let percent_off = |v: u16, p: u16| (v * p) / 10;
@@ -45,9 +50,17 @@ pub fn render(frame: &mut Frame, app_state: &mut AppState) {
                 ),
                 screen_area,
             );
-            frame.render_widget(
-                format!("{}", app_state.current.index),
+            let current_node = if let Some(current) = &app_state.current.node {
+                current
+            } else {
+                &app_state.root
+            };
+
+            render_songs(
+                frame,
                 screen_area.inner(Margin::new(1, 1)),
+                current_node.borrow().children.as_ref(),
+                &mut app_state.list_state,
             );
         }
         Screen::Queue => {
