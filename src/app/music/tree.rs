@@ -20,7 +20,7 @@ pub struct Node {
     pub name: String,
     pub extension: Option<String>,
     pub node_type: NodeType,
-    pub children: Option<HashMap<String, Rc<RefCell<Node>>>>,
+    pub children: Option<Vec<Rc<RefCell<Node>>>>,
     pub parent: Option<Weak<RefCell<Node>>>,
 }
 
@@ -47,7 +47,7 @@ impl Node {
         let children = if self.node_type == NodeType::File {
             None
         } else {
-            let mut children: HashMap<String, Rc<RefCell<Node>>> = HashMap::new();
+            let mut children: Vec<Rc<RefCell<Node>>> = Vec::new();
 
             for entry in fs::read_dir(dir_name)? {
                 let entry = entry?;
@@ -78,7 +78,7 @@ impl Node {
                         node_type,
                         Some(Rc::downgrade(this)),
                     )));
-                    children.insert(node_name, child);
+                    children.push(child);
                 }
             }
             if children.is_empty() {
@@ -107,13 +107,6 @@ impl Node {
             };
 
             self.set_children(dir_name.clone(), this)?;
-
-            if let Some(children) = &self.children {
-                for (_, node) in children {
-                    node.borrow_mut()
-                        .explore(Some(dir_name.to_str().unwrap()), &node)?;
-                }
-            }
         }
         Ok(())
     }

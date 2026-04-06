@@ -47,7 +47,7 @@ fn main() -> color_eyre::Result<()> {
 
     let mut app_state = AppState::new(config);
 
-    // Walk music location
+    // Set root node's children
     let _ = app_state.root.borrow_mut().explore(None, &app_state.root);
 
     color_eyre::install()?;
