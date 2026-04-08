@@ -21,6 +21,7 @@ pub struct Node {
     pub extension: Option<String>,
     pub node_type: NodeType,
     pub children: Option<Vec<Rc<RefCell<Node>>>>,
+    pub child_index: Option<usize>,
     pub parent: Option<Weak<RefCell<Node>>>,
 }
 
@@ -36,6 +37,7 @@ impl Node {
             extension,
             node_type,
             children: None,
+            child_index: None,
             parent: parent,
         }
     }
