@@ -15,10 +15,19 @@ pub fn render_songs(
     children: Option<&Vec<Rc<RefCell<Node>>>>,
     list_state: &mut ListState,
 ) {
-    let mut names: Vec<String> = Vec::new();
+    let count = if let Some(children) = children {
+        children.len()
+    } else {
+        0
+    };
+
+    let mut names: Vec<String> = Vec::with_capacity(count);
+
     if let Some(children) = children {
-        for child in children {
-            names.push(child.borrow().name.clone());
+        if count != 0 {
+            for child in children {
+                names.push(child.borrow().name.clone());
+            }
         }
     }
 

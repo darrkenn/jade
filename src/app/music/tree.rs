@@ -92,15 +92,47 @@ impl Node {
         Ok(())
     }
 
+    pub fn sort_children(&mut self) {
+        if let Some(children) = self.children.as_mut() {
+            children.sort_by(|a, b| {
+                a.borrow()
+                    .name
+                    .to_lowercase()
+                    .cmp(&b.borrow().name.to_lowercase())
+            });
+        } else {
+            return;
+        }
+    }
+
+    pub fn get_location(&self, this: &Rc<RefCell<Node>>) -> String {
+        // Go up the tree and add the current name to the vector
+        fn get_names(rc: &Rc<RefCell<Node>>, mut vec: Vec<String>) -> Vec<String> {
+            vec.push(rc.borrow().name.clone());
+            if let Some(parent) = &rc.borrow().parent {
+                if let Some(upgraded_parent) = parent.upgrade() {
+                    return get_names(&upgraded_parent, vec);
+                } else {
+                    return vec;
+                }
+            } else {
+                vec.reverse();
+                return vec;
+            }
+        }
+        let names = get_names(this, Vec::new());
+        let location = names.join("/");
+        location
+    }
+
     pub fn explore(
         &mut self,
-        parent_location: Option<&str>,
+        location: Option<String>,
         this: &Rc<RefCell<Node>>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         if self.node_type == NodeType::Folder {
-            let dir_name = if let Some(pl) = parent_location {
-                let mut p = PathBuf::from(pl);
-                p.push(&self.name);
+            let dir_name = if let Some(l) = location {
+                let p = PathBuf::from(l);
                 p
             } else {
                 PathBuf::from(&self.name)

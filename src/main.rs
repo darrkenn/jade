@@ -50,6 +50,8 @@ fn main() -> color_eyre::Result<()> {
     // Set root node's children
     let _ = app_state.root.borrow_mut().explore(None, &app_state.root);
 
+    app_state.root.borrow_mut().sort_children();
+
     color_eyre::install()?;
     ratatui::run(|t| app(t, &mut app_state))?;
 

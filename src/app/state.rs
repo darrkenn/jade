@@ -21,8 +21,6 @@ pub struct Current {
     pub volume_level: f32,
     pub screen: Screen,
     pub list: Vec<Node>,
-    pub list_size: usize,
-    pub index: usize,
     pub node: Option<Rc<RefCell<Node>>>,
 }
 
@@ -40,8 +38,6 @@ impl AppState {
                 volume_level: config.volume_level(),
                 screen: Screen::Songs,
                 list: Vec::new(),
-                list_size: 0,
-                index: 0,
                 node: None,
             },
             root: Rc::new(RefCell::new(Node::new(
