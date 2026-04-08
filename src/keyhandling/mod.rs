@@ -13,11 +13,11 @@ mod songs;
 
 pub fn handle_key(key: KeyEvent, app_state: &mut AppState) -> bool {
     match key.code {
-        KeyCode::Backspace => return true,
         KeyCode::Esc => app_state.current.screen = Screen::Settings,
         KeyCode::Char(c) => match c {
             's' => app_state.current.screen = Screen::Songs,
             'q' => app_state.current.screen = Screen::Queue,
+            'm' => return true,
             _ => {}
         },
         _ => {}

@@ -7,7 +7,7 @@ use ratatui::{
     widgets::{List, ListState},
 };
 
-use crate::app::music::tree::Node;
+use crate::app::music::tree::{Node, NodeType};
 
 pub fn render_songs(
     frame: &mut Frame,
@@ -26,7 +26,12 @@ pub fn render_songs(
     if let Some(children) = children {
         if count != 0 {
             for child in children {
-                names.push(child.borrow().name.clone());
+                let name = child.borrow().name.clone();
+                let formatted_name = match child.borrow().node_type {
+                    NodeType::Folder => format!(" {}", name),
+                    NodeType::File => format!("󰝚 {}", name),
+                };
+                names.push(formatted_name);
             }
         }
     }
